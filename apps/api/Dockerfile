@@ -39,6 +39,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 
 ENV NODE_ENV=production
+ENV PORT=3000
 
 EXPOSE 3000
 
