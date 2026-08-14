@@ -1,7 +1,18 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../../services/api';
-import { Check, ChevronLeft, ChevronRight, CircleHelp, FileText, Home, MapPin, Plug, ShieldCheck, Sparkles, UserRound, Zap } from 'lucide-react';
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  CircleHelp,
+  FileText,
+  Home,
+  Plug,
+  ShieldCheck,
+  UserRound,
+  Zap,
+} from 'lucide-react';
 
 type ClientItem = { id: string; name: string; segment: string };
 type ProjectItem = { id: string; name: string; description: string; client: ClientItem; projectData?: string | null; designData?: string | null; plantData?: string | null };

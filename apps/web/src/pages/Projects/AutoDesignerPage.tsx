@@ -128,16 +128,60 @@ function buildDesignerFromPlant(plantData?: string | null) {
   }
 }
 
-function buildPlantFromDesigner(rooms: Room[], points: Point[], existingPlantData?: string | null) {
-  let existing: any = {};
-  try { existing = existingPlantData ? JSON.parse(existingPlantData) : {}; } catch {}
+type PlantRoom = {
+  id: number;
+  name: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  area?: number;
+};
 
-  const existingRooms = Array.isArray(existing.rooms) ? existing.rooms : [];
-  const existingPoints = Array.isArray(existing.points) ? existing.points : [];
-  const roomByIdExisting = new Map(existingRooms.map((r: any) => [String(r.id), r]));
+type ExistingRoom = Partial<PlantRoom> & {
+  id?: string | number;
+};
 
-  const plantRooms = rooms.map((r, i) => {
+type ExistingPoint = {
+  id?: string | number;
+  x?: number;
+  y?: number;
+  label?: string;
+};
+
+function buildPlantFromDesigner(
+  rooms: Room[],
+  points: Point[],
+  existingPlantData?: string | null,
+) {
+  let existing: {
+    rooms?: ExistingRoom[];
+    points?: ExistingPoint[];
+  } = {};
+
+  try {
+    existing = existingPlantData
+      ? JSON.parse(existingPlantData)
+      : {};
+  } catch {
+    existing = {};
+  }
+
+  const existingRooms: ExistingRoom[] = Array.isArray(existing.rooms)
+    ? existing.rooms
+    : [];
+
+  const existingPoints: ExistingPoint[] = Array.isArray(existing.points)
+    ? existing.points
+    : [];
+
+  const roomByIdExisting = new Map<string, ExistingRoom>(
+    existingRooms.map((r) => [String(r.id), r]),
+  );
+
+  const plantRooms: PlantRoom[] = rooms.map((r, i) => {
     const saved = roomByIdExisting.get(String(r.id));
+
     return {
       id: r.id,
       name: r.name,
@@ -149,32 +193,54 @@ function buildPlantFromDesigner(rooms: Room[], points: Point[], existingPlantDat
     };
   });
 
-  const roomMap = new Map(plantRooms.map((r) => [r.id, r]));
-  const savedPointMap = new Map(existingPoints.map((p: any) => [String(p.id), p]));
+  const roomMap = new Map<number, PlantRoom>(
+    plantRooms.map((r) => [r.id, r]),
+  );
+
+  const savedPointMap = new Map<string, ExistingPoint>(
+    existingPoints.map((p) => [String(p.id), p]),
+  );
 
   const plantPoints = points.map((p, i) => {
     const room = roomMap.get(p.roomId) || plantRooms[0];
     const saved = savedPointMap.get(String(p.id));
-    const kind: 'Luz' | 'TUG' | 'TUE' = p.type === 'Iluminação' ? 'Luz' : p.type;
+
+    const kind: 'Luz' | 'TUG' | 'TUE' =
+      p.type === 'Iluminação' ? 'Luz' : p.type;
+
     return {
       id: p.id,
       roomId: p.roomId,
       kind,
-      // Preserve manual position from the 2D plant whenever it exists.
+
+      // Preserva a posição manual da planta 2D.
       x: Number(saved?.x) || (room ? room.x + room.w / 2 : 100),
       y: Number(saved?.y) || (room ? room.y + room.h / 2 : 100),
+
       watts: p.watts,
       voltage: p.voltage,
-      label: saved?.label || (kind === 'Luz' ? `L${i + 1}` : kind === 'TUG' ? `T${i + 1}` : `E${i + 1}`),
+
+      label:
+        saved?.label ||
+        (kind === 'Luz'
+          ? `L${i + 1}`
+          : kind === 'TUG'
+            ? `T${i + 1}`
+            : `E${i + 1}`),
+
       qty: p.qty,
       distance: p.distance,
       description: p.description,
     };
   });
 
-  return { rooms: plantRooms, points: plantPoints, savedAt: new Date().toISOString(), source: 'project-integrated' };
+  return {
+    rooms: plantRooms,
+    points: plantPoints,
+    savedAt: new Date().toISOString(),
+    source: 'project-integrated',
+  };
 }
-
 
 export default function AutoDesignerPage() {
   const [searchParams, setSearchParams] = useSearchParams();

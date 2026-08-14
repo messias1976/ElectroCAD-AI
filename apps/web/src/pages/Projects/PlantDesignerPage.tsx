@@ -1,5 +1,18 @@
 import { useEffect, useMemo, useState, type PointerEvent } from 'react';
-import { ArrowLeft, BrainCircuit, DoorOpen, FileText, Frame, Lightbulb, MousePointer2, Save, Sparkles, Trash2, WandSparkles, Square as WindowIcon, Zap } from 'lucide-react';
+import {
+  ArrowLeft,
+  BrainCircuit,
+  DoorOpen,
+  FileText,
+  Frame,
+  Lightbulb,
+  MousePointer2,
+  Save,
+  Trash2,
+  WandSparkles,
+  Square as WindowIcon,
+  Zap,
+} from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { apiFetch } from '../../services/api';
 
@@ -99,7 +112,6 @@ export default function PlantDesignerPage() {
   function loadProject(project?: Project) { if (!project) return; const merged = mergeData(project.projectData, project.plantData, project.designData); setRooms(merged.rooms); setPoints(merged.points); setSelected(null); setMessage(`Projeto "${project.name}" carregado: ${merged.rooms.length} ambientes e ${merged.points.length} pontos.`); }
   function selectProject(id:string) { setProjectId(id); setSearchParams({projectId:id}); loadProject(projects.find(p=>String(p.id)===String(id))); }
   function pos(e:PointerEvent<SVGSVGElement>) { const r=e.currentTarget.getBoundingClientRect(); return {x:Math.max(0,Math.min(740,((e.clientX-r.left)/r.width)*740)),y:Math.max(0,Math.min(500,((e.clientY-r.top)/r.height)*500))}; }
-  function pointDown(e:PointerEvent<SVGGElement>, id:number) { e.stopPropagation(); setSelected(id); setDragPoint(id);  }
   function move(e:PointerEvent<SVGSVGElement>) {
     const p=pos(e);
     if(dragPoint!==null){
@@ -135,18 +147,11 @@ export default function PlantDesignerPage() {
         const offset=Math.max(0.05,Math.min(0.95,along/span));
         const maxWidth=Math.max(30,span-20);
         arr[idx]={...o,side:snap.side,offset,width:Math.min(Math.max(30,o.width),maxWidth)};
-        if(snap.room.id!==dragOpening.roomId){
-          const source=r;
-          const dest=a.find(rr=>rr.id===snap.room.id);
-          if(!dest) return r;
-          const sourceArr=arr.filter((_,j)=>j!==idx);
-          const destArr=[...(dest[key]||[]),{...o,side:snap.side,offset,width:Math.min(Math.max(30,o.width),maxWidth)}];
-        }
         return {...r,[key]:arr};
       }));
       if(snap.room.id!==dragOpening.roomId){
         const sourceId=dragOpening.roomId, destId=snap.room.id, key=dragOpening.type==='door'?'doors':'windows';
-        const source=rooms.find(r=>r.id===sourceId), dest=rooms.find(r=>r.id===destId);
+       const source = rooms.find(r => r.id === sourceId);
         const o=source?.[key]?.find((x:any)=>x.id===dragOpening.id);
         if(o){
           const horizontal=snap.side==='top'||snap.side==='bottom';
