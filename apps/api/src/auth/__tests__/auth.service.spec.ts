@@ -4,64 +4,100 @@ import { UsersService } from '../users.service';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 
+interface TestUser {
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+}
+
+interface CreateUserArgs {
+  data: TestUser;
+}
+
+interface FindFirstArgs {
+  where?: {
+    OR?: Array<{
+      username?: string;
+      email?: string;
+    }>;
+  };
+}
+
+interface FindUniqueArgs {
+  where?: {
+    id?: string;
+    username?: string;
+    email?: string;
+  };
+}
 describe('AuthService', () => {
   let service: AuthService;
 
-  const users: any[] = [];
+  const users: TestUser[] = [];
 
   const prismaMock = {
     user: {
-      create: jest.fn(async ({ data }: any) => {
-        const user = {
-          id: String(users.length + 1),
-          ...data,
-        };
+      create: jest.fn(
+        async ({ data }: CreateUserArgs): Promise<TestUser> => {
+          const user: TestUser = {
+            id: String(users.length + 1),
+            username: data.username,
+            email: data.email,
+            password: data.password,
+          };
 
-        users.push(user);
-        return user;
-      }),
+          users.push(user);
 
-      findFirst: jest.fn(async ({ where }: any) => {
-        if (where?.OR) {
-          return (
-            users.find(
-              (user) =>
-                user.username === where.OR[0]?.username ||
-                user.email === where.OR[1]?.email,
-            ) ?? null
-          );
-        }
+          return user;
+        },
+      ),
 
-        return null;
-      }),
+      findFirst: jest.fn(
+        async ({ where }: FindFirstArgs): Promise<TestUser | null> => {
+          if (where?.OR) {
+            return (
+              users.find(
+                (user) =>
+                  user.username === where.OR?.[0]?.username ||
+                  user.email === where.OR?.[1]?.email,
+              ) ?? null
+            );
+          }
 
-      findUnique: jest.fn(async ({ where }: any) => {
-        if (where?.username) {
-          return (
-            users.find(
-              (user) => user.username === where.username,
-            ) ?? null
-          );
-        }
+          return null;
+        },
+      ),
 
-        if (where?.email) {
-          return (
-            users.find(
-              (user) => user.email === where.email,
-            ) ?? null
-          );
-        }
+      findUnique: jest.fn(
+        async ({ where }: FindUniqueArgs): Promise<TestUser | null> => {
+          if (where?.username) {
+            return (
+              users.find(
+                (user) => user.username === where.username,
+              ) ?? null
+            );
+          }
 
-        if (where?.id) {
-          return (
-            users.find(
-              (user) => user.id === where.id,
-            ) ?? null
-          );
-        }
+          if (where?.email) {
+            return (
+              users.find(
+                (user) => user.email === where.email,
+              ) ?? null
+            );
+          }
 
-        return null;
-      }),
+          if (where?.id) {
+            return (
+              users.find(
+                (user) => user.id === where.id,
+              ) ?? null
+            );
+          }
+
+          return null;
+        },
+      ),
     },
   };
 
@@ -75,7 +111,9 @@ describe('AuthService', () => {
         imports: [
           JwtModule.register({
             secret: 'test',
-            signOptions: { expiresIn: '1h' },
+            signOptions: {
+              expiresIn: '1h',
+            },
           }),
         ],
 
@@ -95,11 +133,12 @@ describe('AuthService', () => {
   it('should register and login a user', async () => {
     const username = 'testuser';
     const password = 'secret123';
+    const email = 't@t.com';
 
     const reg = await service.register(
       username,
       password,
-      't@t.com',
+      email,
     );
 
     expect(reg.username).toBe(username);
