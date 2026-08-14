@@ -1,0 +1,116 @@
+# ==========================================================
+# ElectroCAD AI - Root .gitignore
+# ==========================================================
+
+############################
+# Dependencies
+############################
+
+node_modules/
+.pnpm-store/
+
+############################
+# Build
+############################
+
+dist/
+build/
+coverage/
+out/
+
+############################
+# Turbo / Vite / Cache
+############################
+
+.vite/
+.cache/
+.turbo/
+.nx/
+
+############################
+# Logs
+############################
+
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+############################
+# Environment
+############################
+
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+############################
+# IDE
+############################
+
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+.idea/
+
+############################
+# Operating System
+############################
+
+.DS_Store
+Thumbs.db
+
+############################
+# TypeScript
+############################
+
+*.tsbuildinfo
+
+############################
+# React
+############################
+
+apps/web/dist/
+
+############################
+# NestJS
+############################
+
+apps/api/dist/
+apps/api/dist-test/
+apps/api/compiled-files.txt
+all-js-files.txt
+
+############################
+# Testing
+############################
+
+coverage/
+.playwright/
+
+############################
+# Temporary
+############################
+
+tmp/
+temp/
+
+############################
+# Local databases
+############################
+
+*.sqlite
+*.db
+*.db-journal
+
+############################
+# Certificates
+############################
+
+*.pem
+*.key
+*.crt
