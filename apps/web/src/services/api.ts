@@ -1,4 +1,4 @@
-const apiUrl = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:3000';
+const apiUrl = import.meta.env.VITE_API_URL ?? '';
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
   const token = localStorage.getItem('access_token');

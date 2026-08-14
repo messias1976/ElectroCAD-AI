@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: electrocad-ai
+    env: node
+    plan: free
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter api prisma:generate && pnpm build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production

@@ -10,9 +10,11 @@
     "dev:api": "pnpm --filter api --workspace-root run start:dev",
     "dev:web": "pnpm --filter web --workspace-root run dev",
     "dev": "echo 'Run `pnpm run dev:api` and `pnpm run dev:web` in separate terminals'",
-    "build": "pnpm --filter ./apps/* run build",
+    "build": "pnpm --filter \"./apps/**\" run build",
     "test": "pnpm -w -r test",
-    "make:admin": "node scripts/promote-admin.cjs"
+    "make:admin": "node scripts/promote-admin.cjs",
+    "postinstall": "pnpm --filter api prisma:generate",
+    "start": "pnpm --filter api start:prod"
   },
   "keywords": [
     "electrical",
