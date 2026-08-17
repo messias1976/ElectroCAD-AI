@@ -1,5 +1,16 @@
 import { NavLink } from 'react-router-dom';
-import { House, CreditCard, Users, TrendingUp, CircuitBoard, PenTool, Bot, Settings, FolderKanban } from 'lucide-react';
+import {
+  House,
+  CreditCard,
+  Users,
+  TrendingUp,
+  CircuitBoard,
+  PenTool,
+  Bot,
+  Settings,
+  FolderKanban,
+  X,
+} from 'lucide-react';
 import { getStoredUser } from '../../services/auth';
 
 const common = [
@@ -18,24 +29,71 @@ const admin = [
   { label: 'Métricas SaaS', icon: TrendingUp, path: '/metrics' },
 ];
 
-export default function Sidebar() {
+type SidebarProps = {
+  open: boolean;
+  onClose: () => void;
+};
+
+export default function Sidebar({ open, onClose }: SidebarProps) {
   const user = getStoredUser();
   const menu = user?.role === 'ADMIN' ? [...common, ...admin] : common;
 
   return (
-    <aside className="app-sidebar w-72 bg-slate-900 text-white flex flex-col print:hidden">
-      <div className="p-6 border-b border-slate-700">
-        <div className="text-2xl font-bold">⚡ ElectroCAD AI</div>
-        <div className="mt-1 text-xs text-slate-400">{user?.role === 'ADMIN' ? 'Administrador SaaS' : 'Assinante'}</div>
-      </div>
-      <nav className="flex-1 p-4 space-y-2">
-        {menu.map((item) => (
-          <NavLink key={item.path} to={item.path} className={({ isActive }) => `flex items-center gap-3 rounded-lg px-4 py-3 transition ${isActive ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <item.icon size={20} />
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
-      </nav>
-    </aside>
+    <>
+      {open && (
+        <button
+          type="button"
+          aria-label="Fechar menu"
+          className="fixed inset-0 z-40 cursor-default bg-slate-950/45 backdrop-blur-[1px]"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        aria-hidden={!open}
+        className={`app-sidebar fixed inset-y-0 left-0 z-50 flex w-[min(18rem,86vw)] max-w-full flex-col bg-slate-900 text-white shadow-2xl transition-transform duration-200 ease-out print:hidden ${
+          open ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-700 p-4 sm:p-6">
+          <div className="min-w-0">
+            <div className="truncate text-xl font-bold sm:text-2xl">⚡ ElectroCAD AI</div>
+            <div className="mt-1 text-xs text-slate-400">
+              {user?.role === 'ADMIN' ? 'Administrador SaaS' : 'Assinante'}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            aria-label="Fechar barra lateral"
+            title="Fechar menu"
+            onClick={onClose}
+            className="ml-3 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-300 transition hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <X size={22} />
+          </button>
+        </div>
+
+        <nav className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4">
+          <div className="space-y-2">
+            {menu.map((item) => (
+              <NavLink
+                key={`${item.path}-${item.label}`}
+                to={item.path}
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `flex min-w-0 items-center gap-3 rounded-lg px-3 py-3 transition sm:px-4 ${
+                    isActive ? 'bg-blue-600' : 'hover:bg-slate-800'
+                  }`
+                }
+              >
+                <item.icon size={20} className="shrink-0" />
+                <span className="truncate">{item.label}</span>
+              </NavLink>
+            ))}
+          </div>
+        </nav>
+      </aside>
+    </>
   );
 }
