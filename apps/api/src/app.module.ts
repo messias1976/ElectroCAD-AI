@@ -8,6 +8,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ClientsModule } from './clients/clients.module';
 import { ProjectsModule } from './projects/projects.module';
 import { AiModule } from './ai/ai.module';
+import { PlansModule } from './plans/plans.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AiModule } from './ai/ai.module';
     ClientsModule,
     ProjectsModule,
     AiModule,
+    PlansModule,
   ],
   controllers: [AppController],
   providers: [AppService],
