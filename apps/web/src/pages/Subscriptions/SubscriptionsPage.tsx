@@ -1,50 +1,56 @@
-import { useEffect, useState } from "react";
-import { apiFetch } from "../../services/api";
+import { useState } from "react";
 
 type Plan = {
-  id: string;
+  id: number;
   name: string;
   price: string;
-  trialDays: number;
+  trialDays: string;
   description: string;
   features: string[];
 };
 
+const STORAGE_KEY = "landing_plans";
 
+const initialPlans: Plan[] = [
+  {
+    id: 1,
+    name: "Starter",
+    price: "R$ 49",
+    trialDays: "14",
+    description: "Ideal para pequenos times que querem começar com o básico.",
+    features: ["1 projeto ativo", "Suporte por email", "Relatórios simples"],
+  },
+  {
+    id: 2,
+    name: "Pro",
+    price: "R$ 129",
+    trialDays: "30",
+    description: "Para empresas que precisam de mais autonomia e controle.",
+    features: ["10 projetos ativos", "Dashboards avançados", "Integrações básicas"],
+  },
+  {
+    id: 3,
+    name: "Enterprise",
+    price: "R$ 299",
+    trialDays: "45",
+    description: "Para operações maiores com equipe e automação.",
+    features: ["Projetos ilimitados", "IA e automações", "Suporte dedicado"],
+  },
+];
 
 export default function SubscriptionsPage() {
-  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plans, setPlans] = useState<Plan[]>(initialPlans);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    apiFetch('/plans', { cache: 'no-store' })
-      .then((data) => { if (Array.isArray(data)) setPlans(data); })
-      .catch((error) => setSyncStatus(error instanceof Error ? error.message : 'Não foi possível carregar os planos.'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleChange = (id: string, field: keyof Plan, value: string) => {
+  const handleChange = (id: number, field: keyof Plan, value: string) => {
     setPlans((current) =>
-      current.map((plan) =>
-        plan.id === id
-          ? { ...plan, [field]: field === 'trialDays' ? Number(value) || 0 : value }
-          : plan,
-      ),
+      current.map((plan) => (plan.id === id ? { ...plan, [field]: value } : plan)),
     );
   };
 
-  const handleSendToLanding = async () => {
-    try {
-      const result = await apiFetch('/plans', {
-        method: 'PUT',
-        body: JSON.stringify({ plans }),
-      });
-      if (Array.isArray(result?.plans)) setPlans(result.plans);
-      setSyncStatus('Planos salvos no servidor. Desktop e mobile usarão os mesmos valores.');
-    } catch (error) {
-      setSyncStatus(error instanceof Error ? error.message : 'Não foi possível salvar os planos.');
-    }
+  const handleSendToLanding = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
+    setSyncStatus("Modificações enviadas para a landing page.");
   };
 
   return (
@@ -59,8 +65,6 @@ export default function SubscriptionsPage() {
       <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
         <b>Período gratuito:</b> novos assinantes começam com 14 dias de teste por padrão. O painel administrativo acompanha os dias restantes e identifica automaticamente quem precisa realizar a assinatura.
       </div>
-
-      {loading ? <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">Carregando planos...</div> : null}
 
       <div className="grid gap-6 xl:grid-cols-3">
         {plans.map((plan) => (
