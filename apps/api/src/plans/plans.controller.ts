@@ -4,9 +4,9 @@ import { AdminGuard } from '../auth/guards/roles.guard';
 import { PrismaService } from '../prisma/prisma.service';
 
 const DEFAULT_PLANS = [
-  { id: 'starter', name: 'Starter', price: 'R$ 49', trialDays: 14, description: 'Ideal para começar com automação leve, IA prática e gestão simples no dia a dia.', features: ['1 projeto ativo', 'IA básica', 'Assistente inteligente', 'Relatórios básicos'] },
-  { id: 'pro', name: 'Pro', price: 'R$ 129', trialDays: 30, description: 'Para empresas que querem mais automação, IA avançada e produtividade em escala.', features: ['10 projetos ativos', 'IA avançada', 'Automações inteligentes', 'Dashboards avançados'] },
-  { id: 'enterprise', name: 'Enterprise', price: 'R$ 299', trialDays: 45, description: 'Para operações maiores com equipe, IA premium e suporte dedicado.', features: ['Projetos ilimitados', 'IA premium e automações', 'Suporte dedicado', 'Gestão comercial completa'] },
+  { id: 'starter', name: 'Starter', price: 'R$ 49', trialDays: 14, description: 'Ideal para começar a organizar projetos, clientes e a rotina técnica.', features: ['1 projeto ativo', 'Clientes', 'Planta 2D', 'Recursos básicos de IA'] },
+  { id: 'pro', name: 'Pro', price: 'R$ 129', trialDays: 30, description: 'Para profissionais que precisam de mais capacidade e recursos técnicos.', features: ['10 projetos ativos', 'Projetista elétrico', 'Professor IA', 'Recursos avançados de IA'] },
+  { id: 'enterprise', name: 'Enterprise', price: 'R$ 299', trialDays: 0, description: 'Para operações maiores com equipe, recursos completos e suporte dedicado.', features: ['Projetos ilimitados', 'Planta 2D', 'Projetista elétrico', 'Professor IA', 'Suporte dedicado'] },
 ];
 
 @Controller('plans')

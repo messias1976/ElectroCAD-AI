@@ -1,101 +1,113 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Subscription, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class SubscriptionsService {
   private readonly logger = new Logger(SubscriptionsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(userId: string, plan: string, provider = 'ASAAS') {
-    return this.prisma.subscription.create({
-      data: { userId, plan, provider, providerId: '', status: 'PENDING' },
-    });
-  }
-
-  async findById(id: string) {
-    return this.prisma.subscription.findUnique({ where: { id } });
-  }
-
-  async updateProviderIdById(id: string, providerId: string) {
-    return this.prisma.subscription.update({ where: { id }, data: { providerId } });
-  }
-
-  private getTrial(user: any) {
+  private getTrial(user: Pick<User, 'trialStartedAt' | 'trialDays' | 'createdAt'>) {
     const start = new Date(user.trialStartedAt ?? user.createdAt);
-    const trialDays = Number(user.trialDays ?? 14);
-    const end = new Date(start.getTime() + trialDays * 86400000);
+    const trialDays = Math.max(0, user.trialDays);
+    const end = new Date(start.getTime() + trialDays * 86_400_000);
     const now = new Date();
-    const remaining = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 86400000));
-    const expired = now >= end;
-    return { trialDays, trialStartedAt: start, trialEndsAt: end, daysRemaining: remaining, expired };
+    return { trialDays, trialStartedAt: start, trialEndsAt: end, daysRemaining: Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 86_400_000)), expired: now >= end };
+  }
+
+  private toAccess(user: User, subscription: Subscription | null) {
+    const trial = this.getTrial(user);
+    const subscriptionActive = subscription?.status === 'ACTIVE' && subscription.paymentStatus === 'PAID';
+    const suspended = user.accessStatus === 'SUSPENDED';
+    return { userId: user.id, plan: subscription?.plan ?? 'Teste gratuito', subscriptionStatus: subscription?.status ?? 'TRIAL', paymentStatus: subscription?.paymentStatus ?? 'TRIAL', hasActiveSubscription: subscriptionActive, ...trial, accessStatus: user.accessStatus, accessAllowed: !suspended && (subscriptionActive || !trial.expired), requiresSubscription: suspended || (!subscriptionActive && trial.expired) };
   }
 
   async getMyAccess(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { subscriptions: { orderBy: { createdAt: 'desc' }, take: 1 } },
-    });
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, include: { subscriptions: { orderBy: { createdAt: 'desc' }, take: 1 } } });
     if (!user) return null;
-    const subscription = user.subscriptions[0] ?? null;
-    const active = subscription?.status === 'ACTIVE';
-    const trial = this.getTrial(user);
-    return {
-      userId: user.id,
-      plan: subscription?.plan ?? 'Teste gratuito',
-      subscriptionStatus: subscription?.status ?? 'TRIAL',
-      hasActiveSubscription: active,
-      ...trial,
-      accessAllowed: active || !trial.expired,
-      requiresSubscription: !active && trial.expired,
-    };
+    return this.toAccess(user, user.subscriptions[0] ?? null);
   }
 
   async getAdminOverview() {
-    const users = await this.prisma.user.findMany({
-      where: { role: { not: 'ADMIN' } },
-      orderBy: { createdAt: 'desc' },
-      include: { subscriptions: { orderBy: { createdAt: 'desc' }, take: 1 } },
-    });
+    const users = await this.prisma.user.findMany({ where: { role: { not: 'ADMIN' } }, orderBy: { createdAt: 'desc' }, include: { subscriptions: { orderBy: { createdAt: 'desc' }, take: 1 } } });
     return users.map((user) => {
-      const trial = this.getTrial(user);
       const subscription = user.subscriptions[0] ?? null;
-      const active = subscription?.status === 'ACTIVE';
-      return {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt,
-        plan: subscription?.plan ?? 'Teste gratuito',
-        subscriptionStatus: subscription?.status ?? 'TRIAL',
-        hasActiveSubscription: active,
-        ...trial,
-        accessAllowed: active || !trial.expired,
-        requiresSubscription: !active && trial.expired,
-      };
+      return { id: user.id, username: user.username, email: user.email, createdAt: user.createdAt, provider: subscription?.provider ?? null, asaasSubscriptionId: subscription?.provider === 'ASAAS' ? subscription.providerId : null, asaasPaymentId: subscription?.paymentId ?? null, ...this.toAccess(user, subscription) };
     });
   }
 
-  async handleAsaasWebhook(event: any) {
-    try {
-      const data = event?.data || event;
-      const paymentId = data?.id || data?.paymentId || data?.payment?.id;
-      const status = (data?.status || data?.payment?.status || '').toUpperCase();
-      if (!paymentId) {
-        this.logger.warn('Webhook Asaas sem paymentId');
-        return { ok: false };
-      }
-      const sub = await this.prisma.subscription.findFirst({ where: { providerId: paymentId } });
-      if (!sub) return { ok: true };
-      let newStatus = sub.status;
-      if (status.includes('CONFIRMED') || status.includes('RECEIVED') || status.includes('PAID')) newStatus = 'ACTIVE';
-      else if (status.includes('CANCELLED') || status.includes('OVERDUE') || status.includes('REFUNDED')) newStatus = 'CANCELLED';
-      await this.prisma.subscription.update({ where: { id: sub.id }, data: { status: newStatus } });
-      return { ok: true };
-    } catch (err: any) {
-      this.logger.error('Erro ao processar webhook Asaas', err?.message || err);
-      return { ok: false };
-    }
+  async getAdminSubscriber(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, include: { subscriptions: { orderBy: { createdAt: 'desc' } } } });
+    if (!user || user.role === 'ADMIN') throw new NotFoundException('Assinante não encontrado.');
+    const subscription = user.subscriptions[0] ?? null;
+    return { id: user.id, username: user.username, email: user.email, subscriptions: user.subscriptions, provider: subscription?.provider ?? null, asaasSubscriptionId: subscription?.provider === 'ASAAS' ? subscription.providerId : null, asaasPaymentId: subscription?.paymentId ?? null, ...this.toAccess(user, subscription) };
+  }
+
+  async extendTrial(userId: string, days: number) {
+    if (!Number.isInteger(days) || days <= 0) throw new NotFoundException('Informe uma quantidade positiva de dias.');
+    const user = await this.prisma.user.update({ where: { id: userId }, data: { trialDays: { increment: days } } });
+    return this.getTrial(user);
+  }
+
+  async changePlan(userId: string, planName: string) {
+    const plan = await this.prisma.plan.findUnique({ where: { name: planName } });
+    if (!plan) throw new NotFoundException('Plano não encontrado.');
+    const current = await this.prisma.subscription.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } });
+    if (!current) return this.prisma.subscription.create({ data: { userId, plan: plan.name, provider: 'MANUAL', providerId: '', status: 'PENDING' } });
+    return this.prisma.subscription.update({ where: { id: current.id }, data: { plan: plan.name } });
+  }
+
+  async setAccessStatus(userId: string, accessStatus: 'ACTIVE' | 'SUSPENDED') {
+    return this.prisma.user.update({ where: { id: userId }, data: { accessStatus } });
+  }
+
+  async cancel(userId: string) {
+    const subscription = await this.prisma.subscription.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } });
+    if (!subscription) throw new NotFoundException('Assinatura não encontrada.');
+    return this.prisma.subscription.update({ where: { id: subscription.id }, data: { status: 'CANCELLED', paymentStatus: 'CANCELLED' } });
+  }
+
+  async deleteSubscriber(userId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.project.deleteMany({ where: { OR: [{ userId }, { client: { ownerId: userId } }] } });
+      await tx.client.deleteMany({ where: { ownerId: userId } });
+      await tx.subscription.deleteMany({ where: { userId } });
+      return tx.user.delete({ where: { id: userId } });
+    });
+  }
+
+  async createPendingAsaasSubscription(userId: string, plan: string, providerId: string, paymentId?: string) {
+    return this.prisma.subscription.create({ data: { userId, plan, provider: 'ASAAS', providerId, paymentId, status: 'PENDING', paymentStatus: 'PENDING' } });
+  }
+
+  async saveAsaasCustomerId(userId: string, asaasCustomerId: string) {
+    return this.prisma.user.update({ where: { id: userId }, data: { asaasCustomerId } });
+  }
+
+  async getUserForCheckout(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Usuário não encontrado.');
+    return user;
+  }
+
+  async getPlan(planName: string) {
+    const plan = await this.prisma.plan.findUnique({ where: { name: planName } });
+    if (!plan) throw new NotFoundException('Plano não encontrado.');
+    return plan;
+  }
+
+  async handleAsaasWebhook(event: unknown) {
+    const payload = event as { event?: string; payment?: { id?: string; subscription?: string; status?: string }; data?: { id?: string; subscription?: string; status?: string } };
+    const data = payload.payment ?? payload.data ?? {};
+    const eventName = (payload.event ?? data.status ?? '').toUpperCase();
+    const paymentId = data.id;
+    const providerId = data.subscription;
+    if (!paymentId && !providerId) { this.logger.warn('Webhook Asaas sem identificador de cobrança ou assinatura.'); return { ok: false }; }
+    const subscription = await this.prisma.subscription.findFirst({ where: { OR: [{ paymentId }, { providerId: providerId ?? paymentId ?? '' }] } });
+    if (!subscription) return { ok: true };
+    const paid = ['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED', 'PAYMENT_RECEIVED_IN_CASH', 'RECEIVED', 'CONFIRMED'].includes(eventName);
+    const cancelled = ['PAYMENT_OVERDUE', 'PAYMENT_REFUNDED', 'PAYMENT_DELETED', 'SUBSCRIPTION_DELETED', 'CANCELLED', 'OVERDUE', 'REFUNDED'].includes(eventName);
+    return this.prisma.subscription.update({ where: { id: subscription.id }, data: { paymentId: paymentId ?? subscription.paymentId, status: paid ? 'ACTIVE' : cancelled ? 'CANCELLED' : subscription.status, paymentStatus: paid ? 'PAID' : cancelled ? (eventName.includes('OVERDUE') ? 'OVERDUE' : 'CANCELLED') : 'PENDING' } });
   }
 }

@@ -32,7 +32,7 @@ const fallbackPlans: Plan[] = [
     id: "enterprise",
     name: "Enterprise",
     price: "R$ 299",
-    trialDays: 45,
+    trialDays: 0,
     description: "Para profissionais e empresas que precisam de maior capacidade e recursos completos.",
     features: ["Tudo do Pro", "Maior capacidade", "Recursos premium disponíveis", "Suporte diferenciado"],
   },

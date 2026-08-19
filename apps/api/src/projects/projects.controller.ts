@@ -5,9 +5,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { SubscriberAccessGuard } from '../subscriptions/guards/subscriber-access.guard';
 
 @Controller('projects')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), SubscriberAccessGuard)
 export class ProjectsController {
   constructor(private projectsService: ProjectsService) {}
 

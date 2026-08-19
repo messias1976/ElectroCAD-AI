@@ -19,6 +19,8 @@ model User {
     updatedAt     DateTime       @updatedAt
     trialStartedAt DateTime      @default(now())
     trialDays      Int           @default(14)
+    accessStatus   String        @default("ACTIVE")
+    asaasCustomerId String?
     subscriptions Subscription[]
     projects      Project[]
     clients       Client[]
@@ -62,11 +64,14 @@ model Subscription {
     provider   String
     providerId String
     status     String
+    paymentId  String?  @unique
+    paymentStatus String @default("PENDING")
     plan       String
     createdAt  DateTime @default(now())
     updatedAt  DateTime @updatedAt
 
     @@index([userId])
+    @@index([providerId])
 }
 
 model AiSettings {

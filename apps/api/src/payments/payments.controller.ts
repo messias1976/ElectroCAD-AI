@@ -1,4 +1,4 @@
-import { Body, Controller, Headers, Post } from '@nestjs/common';
+import { Body, Controller, Headers, Post, UnauthorizedException } from '@nestjs/common';
 import { AsaasService } from './asaas.service';
 import { CreateChargeDto } from './create-charge.dto';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
@@ -17,15 +17,11 @@ export class PaymentsController {
 
   @Post('webhook')
   async webhook(@Body() body: any, @Headers() headers: any) {
-    // Checagem simples de segredo se configurado
-    const secret = process.env.ASAAS_WEBHOOK_SECRET;
-    const incoming =
-      headers['x-asaas-signature'] ||
-      headers['x-asaas-signature'.toLowerCase()];
-    if (secret && incoming && incoming !== secret) {
-      return { ok: false };
+    const token = headers['asaas-access-token'] ?? headers['x-webhook-token'];
+    if (!this.asaas.isValidWebhookToken(Array.isArray(token) ? token[0] : token)) {
+      throw new UnauthorizedException('Token de webhook inválido.');
     }
-    // Delegar processamento para SubscriptionsService
+    this.asaas.logWebhook(body);
     await this.subs.handleAsaasWebhook(body);
     return { ok: true };
   }

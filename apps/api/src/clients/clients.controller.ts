@@ -3,9 +3,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { SubscriberAccessGuard } from '../subscriptions/guards/subscriber-access.guard';
 
 @Controller('clients')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), SubscriberAccessGuard)
 export class ClientsController {
   constructor(private clientsService: ClientsService) {}
 
