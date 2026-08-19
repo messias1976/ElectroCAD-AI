@@ -1,48 +1,31 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { apiFetch } from "../services/api";
 
-const STORAGE_KEY = "landing_plans";
+type Plan = {
+  id: string;
+  name: string;
+  price: string;
+  trialDays: number;
+  description: string;
+  features: string[];
+};
 
-const initialPlans = [
-  {
-    name: "Starter",
-    price: "R$ 49",
-    trialDays: 14,
-    description: "Ideal para começar com automação leve, IA prática e gestão simples no dia a dia.",
-    features: ["1 projeto ativo", "IA básica", "Assistente inteligente", "Relatórios básicos"],
-  },
-  {
-    name: "Pro",
-    price: "R$ 129",
-    trialDays: 30,
-    description: "Para empresas que querem mais automação, IA avançada e produtividade em escala.",
-    features: ["10 projetos ativos", "IA avançada", "Automações inteligentes", "Dashboards avançados"],
-  },
-  {
-    name: "Enterprise",
-    price: "R$ 299",
-    trialDays: 45,
-    description: "Para operações maiores com equipe, IA premium e suporte dedicado.",
-    features: ["Projetos ilimitados", "IA premium e automações", "Suporte dedicado", "Gestão comercial completa"],
-  },
+const fallbackPlans: Plan[] = [
+  { id: "starter", name: "Starter", price: "R$ 49", trialDays: 14, description: "Ideal para começar com automação leve, IA prática e gestão simples no dia a dia.", features: ["1 projeto ativo", "IA básica", "Assistente inteligente", "Relatórios básicos"] },
+  { id: "pro", name: "Pro", price: "R$ 129", trialDays: 30, description: "Para empresas que querem mais automação, IA avançada e produtividade em escala.", features: ["10 projetos ativos", "IA avançada", "Automações inteligentes", "Dashboards avançados"] },
+  { id: "enterprise", name: "Enterprise", price: "R$ 299", trialDays: 45, description: "Para operações maiores com equipe, IA premium e suporte dedicado.", features: ["Projetos ilimitados", "IA premium e automações", "Suporte dedicado", "Gestão comercial completa"] },
 ];
 
 export default function LandingPage() {
-  const [plans, setPlans] = useState(initialPlans);
+  const [plans, setPlans] = useState<Plan[]>(fallbackPlans);
 
   useEffect(() => {
-    const storedPlans = localStorage.getItem(STORAGE_KEY);
-
-    if (!storedPlans) {
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(storedPlans) as typeof initialPlans;
-      setPlans(parsed);
-    } catch {
-      // Keep default plans when storage is invalid.
-    }
+    let active = true;
+    apiFetch('/plans', { cache: 'no-store' })
+      .then((data) => { if (active && Array.isArray(data) && data.length) setPlans(data); })
+      .catch(() => { /* fallback keeps the landing page available if API is temporarily unavailable */ });
+    return () => { active = false; };
   }, []);
 
   return (

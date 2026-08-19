@@ -12,7 +12,7 @@ export class SubscriptionsController {
 
   @Get('me')
   async me(@Req() req: any) {
-    return this.subs.getMyAccess(req.user.id);
+    return this.subs.getMyAccess(req.user.userId);
   }
 
   @UseGuards(AdminGuard)

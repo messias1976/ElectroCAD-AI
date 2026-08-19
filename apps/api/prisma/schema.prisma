@@ -76,3 +76,14 @@ model AiSettings {
     enabled          Boolean  @default(true)
     updatedAt        DateTime @updatedAt
 }
+
+model Plan {
+    id          String   @id @default(cuid())
+    name        String   @unique
+    price       String
+    trialDays   Int      @default(14)
+    description String
+    features    String[]
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+}

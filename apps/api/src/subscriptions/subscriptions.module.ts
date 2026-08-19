@@ -5,11 +5,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AsaasService } from '../payments/asaas.service';
 import { ConfigModule } from '@nestjs/config';
 import { AdminGuard } from '../auth/guards/roles.guard';
+import { PlansController } from './plans.controller';
+import { PlansService } from './plans.service';
 
 @Module({
   imports: [ConfigModule],
-  controllers: [SubscriptionsController],
-  providers: [SubscriptionsService, PrismaService, AsaasService, AdminGuard],
+  controllers: [SubscriptionsController, PlansController],
+  providers: [SubscriptionsService, PlansService, PrismaService, AsaasService, AdminGuard],
   exports: [SubscriptionsService],
 })
 export class SubscriptionsModule {}
