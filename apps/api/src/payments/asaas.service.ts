@@ -21,11 +21,21 @@ export class AsaasService {
     });
   }
 
-  async createCustomer(input: { name: string; email?: string | null; externalReference: string }) {
+  async createCustomer(input: { name: string; email?: string | null; cpfCnpj: string; externalReference: string }) {
     const res = await this.client.post('/customers', {
       name: input.name,
       email: input.email || undefined,
+      cpfCnpj: input.cpfCnpj,
       externalReference: input.externalReference,
+    });
+    return res.data;
+  }
+
+  async updateCustomer(id: string, input: { name?: string; email?: string | null; cpfCnpj: string }) {
+    const res = await this.client.put(`/customers/${encodeURIComponent(id)}`, {
+      ...(input.name ? { name: input.name } : {}),
+      ...(input.email ? { email: input.email } : {}),
+      cpfCnpj: input.cpfCnpj,
     });
     return res.data;
   }
