@@ -11,6 +11,8 @@ export default function SubscribePage() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [billingType, setBillingType] = useState<'UNDEFINED' | 'PIX' | 'BOLETO' | 'CREDIT_CARD'>('UNDEFINED');
   const [cpfCnpj, setCpfCnpj] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState('');
 
@@ -23,6 +25,8 @@ export default function SubscribePage() {
   const selectPlan = (plan: Plan) => {
     setSelectedPlan(plan);
     setCpfCnpj('');
+    setName('');
+    setEmail('');
     setBillingType('UNDEFINED');
     setFeedback('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -31,14 +35,13 @@ export default function SubscribePage() {
   const subscribe = async () => {
     if (!selectedPlan) return;
     const document = cpfCnpj.replace(/\D/g, '');
-    if (document.length !== 11 && document.length !== 14) {
-      setFeedback('Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) para continuar.');
-      return;
-    }
+    if (name.trim().length < 3) { setFeedback('Informe seu nome completo.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setFeedback('Informe um e-mail válido.'); return; }
+    if (document.length !== 11 && document.length !== 14) { setFeedback('Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.'); return; }
     setLoading(true);
     setFeedback('Criando sua assinatura no Asaas...');
     try {
-      const result = await apiFetch('/subscriptions/checkout', { method: 'POST', body: JSON.stringify({ plan: selectedPlan.name, billingType, cpfCnpj: document }) });
+      const result = await apiFetch('/subscriptions/checkout', { method: 'POST', body: JSON.stringify({ plan: selectedPlan.name, billingType, cpfCnpj: document, name: name.trim(), email: email.trim() }) });
       setFeedback(result?.trialApplied ? `Plano ${selectedPlan.name} reservado. A primeira cobrança está prevista para ${new Date(`${result.firstChargeDate}T00:00:00`).toLocaleDateString('pt-BR')}.` : `Plano ${selectedPlan.name} criado no Asaas. Aguarde a confirmação do pagamento para a liberação.`);
       setAccess(await apiFetch('/subscriptions/me'));
     } catch (error) { setFeedback(error instanceof Error ? error.message : 'Não foi possível criar a assinatura.'); }
@@ -71,7 +74,11 @@ export default function SubscribePage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5"><p className="text-xs font-bold uppercase tracking-wider text-blue-600">Plano selecionado</p><div className="mt-1 flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-2xl font-bold text-slate-900">{selectedPlan.name}</h3><p className="text-sm text-slate-600">{selectedPlan.description}</p></div><div className="text-2xl font-bold text-blue-700">{selectedPlan.price}<span className="text-sm font-medium text-slate-500">/mês</span></div></div></div>
             <div className="mt-7 space-y-5">
-              <div><label htmlFor="cpfCnpj" className="mb-2 block text-sm font-semibold text-slate-800">CPF ou CNPJ</label><input id="cpfCnpj" value={cpfCnpj} onChange={(e) => setCpfCnpj(e.target.value)} placeholder="Digite seu CPF ou CNPJ" inputMode="numeric" autoComplete="off" className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /><p className="mt-1 text-xs text-slate-500">Esse documento será usado para cadastrar o cliente no Asaas.</p></div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div><label htmlFor="customerName" className="mb-2 block text-sm font-semibold text-slate-800">Nome completo</label><input id="customerName" value={name} onChange={(e) => setName(e.target.value)} placeholder="Digite seu nome completo" autoComplete="name" className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></div>
+                <div><label htmlFor="customerEmail" className="mb-2 block text-sm font-semibold text-slate-800">E-mail</label><input id="customerEmail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seuemail@exemplo.com" autoComplete="email" className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></div>
+              </div>
+              <div><label htmlFor="cpfCnpj" className="mb-2 block text-sm font-semibold text-slate-800">CPF ou CNPJ</label><input id="cpfCnpj" value={cpfCnpj} onChange={(e) => setCpfCnpj(e.target.value)} placeholder="Digite seu CPF ou CNPJ" inputMode="numeric" autoComplete="off" className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /><p className="mt-1 text-xs text-slate-500">Esses dados serão usados para cadastrar o cliente no Asaas.</p></div>
               <div><label htmlFor="billingType" className="mb-2 block text-sm font-semibold text-slate-800">Forma de pagamento</label><select id="billingType" value={billingType} onChange={(e) => setBillingType(e.target.value as typeof billingType)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"><option value="UNDEFINED">Escolher na cobrança</option><option value="PIX">Pix</option><option value="BOLETO">Boleto</option><option value="CREDIT_CARD">Cartão de crédito</option></select></div>
               <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600"><b className="text-slate-900">Próximo passo</b><p className="mt-1">O ElectroCAD-AI cadastra seus dados no Asaas, cria a assinatura e acompanha a confirmação do pagamento automaticamente.</p></div>
               <button type="button" onClick={subscribe} disabled={loading} className="w-full rounded-xl bg-blue-600 px-5 py-3.5 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">{loading ? <><Loader2 size={18} className="mr-2 inline animate-spin" /> Processando...</> : <><CreditCard size={18} className="mr-2 inline" /> Confirmar e assinar {selectedPlan.name}</>}</button>
