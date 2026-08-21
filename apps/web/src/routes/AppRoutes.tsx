@@ -11,14 +11,13 @@ const RegisterPage = lazy(() => import('../pages/Login/RegisterPage'));
 const DashboardPage = lazy(() => import('../pages/Dashboard/DashboardPage'));
 const ProjectsPage = lazy(() => import('../pages/Projects/ProjectsPage'));
 const AutoDesignerPage = lazy(() => import('../pages/Projects/AutoDesignerPage'));
-const PlantDesignerPage = lazy(() => import('../pages/Projects/PlantDesignerPage'));
+const PlantDesignerPage = lazy(() => import('../pages/Projects/PlantDesignerProfessionalPage'));
 const ClientsPage = lazy(() => import('../pages/Clients/ClientsPage'));
 const SubscriptionsPage = lazy(() => import('../pages/Subscriptions/SubscriptionsPage'));
 const MetricsPage = lazy(() => import('../pages/Metrics/MetricsPage'));
 const ProfessorPage = lazy(() => import('../pages/AI/ProfessorPage'));
 const AISettingsPage = lazy(() => import('../pages/AI/AISettingsPage'));
 const SubscribePage = lazy(() => import('../pages/Subscriptions/SubscribePage'));
-
 
 class RouteErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
