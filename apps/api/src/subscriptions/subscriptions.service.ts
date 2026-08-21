@@ -5,223 +5,31 @@ import { AsaasBillingType, AsaasCycle, AsaasService } from '../payments/asaas.se
 @Injectable()
 export class SubscriptionsService {
   private readonly logger = new Logger(SubscriptionsService.name);
-
   constructor(private prisma: PrismaService, private asaas: AsaasService) {}
-
-  async create(userId: string, plan: string, provider = 'ASAAS') {
-    return this.prisma.subscription.create({
-      data: { userId, plan, provider, providerId: '', status: 'PENDING' },
-    });
-  }
-
-  async findById(id: string) {
-    return this.prisma.subscription.findUnique({ where: { id } });
-  }
-
-  async updateProviderIdById(id: string, providerId: string) {
-    return this.prisma.subscription.update({ where: { id }, data: { providerId } });
-  }
-
-  private getTrial(user: any) {
-    const start = new Date(user.trialStartedAt ?? user.createdAt);
-    const trialDays = Number(user.trialDays ?? 14);
-    const end = new Date(start.getTime() + trialDays * 86400000);
-    const now = new Date();
-    const remaining = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 86400000));
-    const expired = now >= end;
-    return { trialDays, trialStartedAt: start, trialEndsAt: end, daysRemaining: remaining, expired };
-  }
-
-  async getMyAccess(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { subscriptions: { orderBy: { createdAt: 'desc' }, take: 1 } },
-    });
-    if (!user) return null;
-    const subscription = user.subscriptions[0] ?? null;
-    const active = subscription?.status === 'ACTIVE';
-    const trial = this.getTrial(user);
-    return {
-      userId: user.id,
-      plan: subscription?.plan ?? 'Teste gratuito',
-      subscriptionStatus: subscription?.status ?? 'TRIAL',
-      provider: subscription?.provider ?? null,
-      providerId: subscription?.providerId || null,
-      hasActiveSubscription: active,
-      ...trial,
-      accessAllowed: active || !trial.expired,
-      requiresSubscription: !active && trial.expired,
-    };
-  }
-
-  async getAdminOverview() {
-    const users = await this.prisma.user.findMany({
-      where: { role: { not: 'ADMIN' } },
-      orderBy: { createdAt: 'desc' },
-      include: { subscriptions: { orderBy: { createdAt: 'desc' }, take: 1 } },
-    });
-    return users.map((user) => {
-      const trial = this.getTrial(user);
-      const subscription = user.subscriptions[0] ?? null;
-      const active = subscription?.status === 'ACTIVE';
-      return {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt,
-        plan: subscription?.plan ?? 'Teste gratuito',
-        subscriptionStatus: subscription?.status ?? 'TRIAL',
-        provider: subscription?.provider ?? null,
-        providerId: subscription?.providerId || null,
-        asaasCustomerId: user.asaasCustomerId,
-        hasActiveSubscription: active,
-        ...trial,
-        accessAllowed: active || !trial.expired,
-        requiresSubscription: !active && trial.expired,
-      };
-    });
-  }
-
-  private parsePlanValue(price: string) {
-    const normalized = String(price)
-      .replace(/R\$\s*/i, '')
-      .replace(/\./g, '')
-      .replace(',', '.')
-      .replace(/[^0-9.]/g, '');
-    const value = Number(normalized);
-    if (!Number.isFinite(value) || value <= 0) throw new BadRequestException(`Valor inválido para o plano: ${price}`);
-    return value;
-  }
-
-  private trialDueDate(user: { trialStartedAt: Date; trialDays: number }) {
-    const trial = this.getTrial(user);
-    const now = new Date();
-    const due = trial.expired ? now : trial.trialEndsAt;
-    return due.toISOString().slice(0, 10);
-  }
-
-  async createAsaasSubscription(userId: string, planName: string, billingType: AsaasBillingType = 'UNDEFINED') {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new BadRequestException('Usuário não encontrado.');
-
-    const plan = await this.prisma.plan.findUnique({ where: { name: planName.trim() } });
-    if (!plan) throw new BadRequestException('Plano não encontrado.');
-
+  async create(userId: string, plan: string, provider = 'ASAAS') { return this.prisma.subscription.create({ data: { userId, plan, provider, providerId: '', status: 'PENDING' } }); }
+  async findById(id: string) { return this.prisma.subscription.findUnique({ where: { id } }); }
+  async updateProviderIdById(id: string, providerId: string) { return this.prisma.subscription.update({ where: { id }, data: { providerId } }); }
+  private getTrial(user: any) { const start = new Date(user.trialStartedAt ?? user.createdAt); const trialDays = Number(user.trialDays ?? 14); const end = new Date(start.getTime() + trialDays * 86400000); const now = new Date(); const remaining = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 86400000)); return { trialDays, trialStartedAt: start, trialEndsAt: end, daysRemaining: remaining, expired: now >= end }; }
+  async getMyAccess(userId: string) { const user = await this.prisma.user.findUnique({ where: { id: userId }, include: { subscriptions: { orderBy: { createdAt: 'desc' }, take: 1 } } }); if (!user) return null; const subscription = user.subscriptions[0] ?? null; const active = subscription?.status === 'ACTIVE'; const trial = this.getTrial(user); return { userId: user.id, plan: subscription?.plan ?? 'Teste gratuito', subscriptionStatus: subscription?.status ?? 'TRIAL', provider: subscription?.provider ?? null, providerId: subscription?.providerId || null, hasActiveSubscription: active, ...trial, accessAllowed: active || !trial.expired, requiresSubscription: !active && trial.expired }; }
+  async getAdminOverview() { const users = await this.prisma.user.findMany({ where: { role: { not: 'ADMIN' } }, orderBy: { createdAt: 'desc' }, include: { subscriptions: { orderBy: { createdAt: 'desc' }, take: 1 } } }); return users.map((user) => { const trial = this.getTrial(user); const subscription = user.subscriptions[0] ?? null; const active = subscription?.status === 'ACTIVE'; return { id: user.id, username: user.username, email: user.email, role: user.role, createdAt: user.createdAt, plan: subscription?.plan ?? 'Teste gratuito', subscriptionStatus: subscription?.status ?? 'TRIAL', provider: subscription?.provider ?? null, providerId: subscription?.providerId || null, asaasCustomerId: user.asaasCustomerId, hasActiveSubscription: active, ...trial, accessAllowed: active || !trial.expired, requiresSubscription: !active && trial.expired }; }); }
+  private parsePlanValue(price: string) { const normalized = String(price).replace(/R\$\s*/i, '').replace(/\./g, '').replace(',', '.').replace(/[^0-9.]/g, ''); const value = Number(normalized); if (!Number.isFinite(value) || value <= 0) throw new BadRequestException(`Valor inválido para o plano: ${price}`); return value; }
+  private normalizeCpfCnpj(value: string) { const digits = String(value || '').replace(/\D/g, ''); if (digits.length !== 11 && digits.length !== 14) throw new BadRequestException('Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.'); if (/^(\d)\1+$/.test(digits)) throw new BadRequestException('CPF ou CNPJ inválido.'); return digits; }
+  private trialDueDate(user: { trialStartedAt: Date; trialDays: number }) { const trial = this.getTrial(user); return (trial.expired ? new Date() : trial.trialEndsAt).toISOString().slice(0, 10); }
+  async createAsaasSubscription(userId: string, planName: string, billingType: AsaasBillingType = 'UNDEFINED', cpfCnpj = '') {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } }); if (!user) throw new BadRequestException('Usuário não encontrado.');
+    const plan = await this.prisma.plan.findUnique({ where: { name: planName.trim() } }); if (!plan) throw new BadRequestException('Plano não encontrado.');
+    const document = this.normalizeCpfCnpj(cpfCnpj);
     let customerId = user.asaasCustomerId;
-    if (!customerId) {
-      const customer = await this.asaas.createCustomer({
-        name: user.username,
-        email: user.email,
-        externalReference: user.id,
-      });
-      customerId = customer?.id;
-      if (!customerId) throw new BadRequestException('Asaas não retornou o ID do cliente.');
-      await this.prisma.user.update({ where: { id: user.id }, data: { asaasCustomerId: customerId } });
-    }
-
-    const value = this.parsePlanValue(plan.price);
-    const nextDueDate = this.trialDueDate(user);
-    const localSubscription = await this.prisma.subscription.create({
-      data: {
-        userId: user.id,
-        plan: plan.name,
-        provider: 'ASAAS',
-        providerId: '',
-        status: 'PENDING',
-      },
-    });
-
-    try {
-      const remote = await this.asaas.createSubscription({
-        customer: customerId,
-        billingType,
-        value,
-        nextDueDate,
-        cycle: 'MONTHLY' as AsaasCycle,
-        description: `ElectroCAD-AI - Plano ${plan.name}`,
-        externalReference: localSubscription.id,
-      });
-
-      const updated = await this.prisma.subscription.update({
-        where: { id: localSubscription.id },
-        data: { providerId: remote.id || '', status: 'PENDING' },
-      });
-
-      return {
-        subscription: updated,
-        asaas: remote,
-        customerId,
-        firstChargeDate: nextDueDate,
-        trialApplied: !this.getTrial(user).expired,
-      };
-    } catch (error) {
-      await this.prisma.subscription.delete({ where: { id: localSubscription.id } });
-      throw error;
-    }
+    if (customerId) await this.asaas.updateCustomer(customerId, { name: user.username, email: user.email, cpfCnpj: document });
+    else { const customer = await this.asaas.createCustomer({ name: user.username, email: user.email, cpfCnpj: document, externalReference: user.id }); customerId = customer?.id; if (!customerId) throw new BadRequestException('Asaas não retornou o ID do cliente.'); await this.prisma.user.update({ where: { id: user.id }, data: { asaasCustomerId: customerId } }); }
+    const value = this.parsePlanValue(plan.price); const nextDueDate = this.trialDueDate(user);
+    const localSubscription = await this.prisma.subscription.create({ data: { userId: user.id, plan: plan.name, provider: 'ASAAS', providerId: '', status: 'PENDING' } });
+    try { const remote = await this.asaas.createSubscription({ customer: customerId, billingType, value, nextDueDate, cycle: 'MONTHLY' as AsaasCycle, description: `ElectroCAD-AI - Plano ${plan.name}`, externalReference: localSubscription.id }); const updated = await this.prisma.subscription.update({ where: { id: localSubscription.id }, data: { providerId: remote.id || '', status: 'PENDING' } }); return { subscription: updated, asaas: remote, customerId, firstChargeDate: nextDueDate, trialApplied: !this.getTrial(user).expired }; }
+    catch (error) { await this.prisma.subscription.delete({ where: { id: localSubscription.id } }); throw error; }
   }
-
-  async extendTrial(userId: string, days: number) {
-    const extraDays = Math.max(0, Math.floor(days));
-    if (!extraDays) throw new Error('Informe uma quantidade de dias maior que zero.');
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new Error('Usuário não encontrado.');
-    return this.prisma.user.update({ where: { id: userId }, data: { trialDays: user.trialDays + extraDays } });
-  }
-
-  async changePlan(userId: string, plan: string) {
-    const normalizedPlan = plan.trim();
-    if (!normalizedPlan) throw new Error('Plano inválido.');
-    const subscription = await this.prisma.subscription.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } });
-    if (subscription) return this.prisma.subscription.update({ where: { id: subscription.id }, data: { plan: normalizedPlan } });
-    return this.prisma.subscription.create({ data: { userId, plan: normalizedPlan, provider: 'ASAAS', providerId: '', status: 'PENDING' } });
-  }
-
-  async changeStatus(userId: string, status: string) {
-    const allowed = new Set(['ACTIVE', 'PENDING', 'CANCELLED', 'SUSPENDED']);
-    const normalizedStatus = status.trim().toUpperCase();
-    if (!allowed.has(normalizedStatus)) throw new Error('Status inválido.');
-    const subscription = await this.prisma.subscription.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } });
-    if (!subscription) return this.prisma.subscription.create({ data: { userId, plan: 'Manual', provider: 'MANUAL', providerId: '', status: normalizedStatus } });
-    return this.prisma.subscription.update({ where: { id: subscription.id }, data: { status: normalizedStatus } });
-  }
-
-  async deleteUser(userId: string) {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.project.deleteMany({ where: { userId } });
-      await tx.subscription.deleteMany({ where: { userId } });
-      await tx.client.deleteMany({ where: { ownerId: userId } });
-      await tx.user.delete({ where: { id: userId } });
-      return { ok: true, userId };
-    });
-  }
-
-  async handleAsaasWebhook(event: any) {
-    try {
-      const data = event?.data || event;
-      const paymentId = data?.id || data?.paymentId || data?.payment?.id;
-      const remoteSubscriptionId = data?.subscription || data?.payment?.subscription || data?.subscription?.id;
-      const externalReference = data?.externalReference || data?.subscription?.externalReference;
-      const status = String(data?.status || data?.payment?.status || data?.subscription?.status || '').toUpperCase();
-
-      let sub = remoteSubscriptionId
-        ? await this.prisma.subscription.findFirst({ where: { providerId: remoteSubscriptionId } })
-        : null;
-      if (!sub && externalReference) sub = await this.prisma.subscription.findUnique({ where: { id: externalReference } });
-      if (!sub && paymentId) sub = await this.prisma.subscription.findFirst({ where: { providerId: paymentId } });
-      if (!sub) return { ok: true };
-
-      let newStatus = sub.status;
-      if (status.includes('RECEIVED') || status.includes('CONFIRMED') || status.includes('PAID')) newStatus = 'ACTIVE';
-      else if (status.includes('OVERDUE')) newStatus = 'SUSPENDED';
-      else if (status.includes('CANCELLED') || status.includes('REFUNDED')) newStatus = 'CANCELLED';
-      else if (status === 'INACTIVE') newStatus = 'SUSPENDED';
-
-      await this.prisma.subscription.update({ where: { id: sub.id }, data: { status: newStatus } });
-      return { ok: true, subscriptionId: sub.id, status: newStatus };
-    } catch (err: any) {
-      this.logger.error('Erro ao processar webhook Asaas', err?.message || err);
-      return { ok: false };
-    }
-  }
+  async extendTrial(userId: string, days: number) { const extraDays = Math.max(0, Math.floor(days)); if (!extraDays) throw new Error('Informe uma quantidade de dias maior que zero.'); const user = await this.prisma.user.findUnique({ where: { id: userId } }); if (!user) throw new Error('Usuário não encontrado.'); return this.prisma.user.update({ where: { id: userId }, data: { trialDays: user.trialDays + extraDays } }); }
+  async changePlan(userId: string, plan: string) { const normalizedPlan = plan.trim(); if (!normalizedPlan) throw new Error('Plano inválido.'); const subscription = await this.prisma.subscription.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } }); if (subscription) return this.prisma.subscription.update({ where: { id: subscription.id }, data: { plan: normalizedPlan } }); return this.prisma.subscription.create({ data: { userId, plan: normalizedPlan, provider: 'ASAAS', providerId: '', status: 'PENDING' } }); }
+  async changeStatus(userId: string, status: string) { const allowed = new Set(['ACTIVE', 'PENDING', 'CANCELLED', 'SUSPENDED']); const normalizedStatus = status.trim().toUpperCase(); if (!allowed.has(normalizedStatus)) throw new Error('Status inválido.'); const subscription = await this.prisma.subscription.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } }); if (!subscription) return this.prisma.subscription.create({ data: { userId, plan: 'Manual', provider: 'MANUAL', providerId: '', status: normalizedStatus } }); return this.prisma.subscription.update({ where: { id: subscription.id }, data: { status: normalizedStatus } }); }
+  async deleteUser(userId: string) { return this.prisma.$transaction(async (tx) => { await tx.project.deleteMany({ where: { userId } }); await tx.subscription.deleteMany({ where: { userId } }); await tx.client.deleteMany({ where: { ownerId: userId } }); await tx.user.delete({ where: { id: userId } }); return { ok: true, userId }; }); }
+  async handleAsaasWebhook(event: any) { try { const data = event?.data || event; const paymentId = data?.id || data?.paymentId || data?.payment?.id; const remoteSubscriptionId = data?.subscription || data?.payment?.subscription || data?.subscription?.id; const externalReference = data?.externalReference || data?.subscription?.externalReference; const status = String(data?.status || data?.payment?.status || data?.subscription?.status || '').toUpperCase(); let sub = remoteSubscriptionId ? await this.prisma.subscription.findFirst({ where: { providerId: remoteSubscriptionId } }) : null; if (!sub && externalReference) sub = await this.prisma.subscription.findUnique({ where: { id: externalReference } }); if (!sub && paymentId) sub = await this.prisma.subscription.findFirst({ where: { providerId: paymentId } }); if (!sub) return { ok: true }; let newStatus = sub.status; if (status.includes('RECEIVED') || status.includes('CONFIRMED') || status.includes('PAID')) newStatus = 'ACTIVE'; else if (status.includes('OVERDUE')) newStatus = 'SUSPENDED'; else if (status.includes('CANCELLED') || status.includes('REFUNDED')) newStatus = 'CANCELLED'; else if (status === 'INACTIVE') newStatus = 'SUSPENDED'; await this.prisma.subscription.update({ where: { id: sub.id }, data: { status: newStatus } }); return { ok: true, subscriptionId: sub.id, status: newStatus }; } catch (err: any) { this.logger.error('Erro ao processar webhook Asaas', err?.message || err); return { ok: false }; } }
 }
