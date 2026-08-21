@@ -18,7 +18,6 @@ body {
   background: #f1f5f9;
 }
 
-/* Feedback visual global para cliques */
 button {
   transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease, opacity 120ms ease;
   -webkit-tap-highlight-color: transparent;
@@ -37,56 +36,223 @@ button.ui-clicked:not(:disabled) {
 }
 
 @media print {
-  @page { size: A4 portrait; margin: 10mm; }
-  html, body, #root {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  html,
+  body,
+  #root {
     width: 100% !important;
-    min-height: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
     height: auto !important;
+    min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     border: 0 !important;
     background: #fff !important;
     overflow: visible !important;
   }
-  body { font-size: 9.5pt !important; color: #111827 !important; }
-  .app-sidebar, .app-header, .print\\:hidden, nav, button, select, input, textarea { display: none !important; }
-  main { overflow: visible !important; padding: 0 !important; }
-  .print-page { display: block !important; width: 100% !important; }
-  .print-break-before { break-before: page; page-break-before: always; }
-  .print-break-after { break-after: page; page-break-after: always; }
-  .print-avoid-break { break-inside: avoid; page-break-inside: avoid; }
-  .no-print { display: none !important; }
 
-  /* Evita que tabelas e cards sejam cortados no meio */
-  section, table, tr { break-inside: avoid; page-break-inside: avoid; }
-  table { width: 100% !important; min-width: 0 !important; font-size: 8pt !important; }
-  th, td { padding: 4px !important; }
-
-  /* O diagrama deve caber na folha e nunca manter o min-width de 900px do modo tela */
-  .print-diagram-section {
-    break-before: page;
-    page-break-before: always;
-    break-inside: avoid;
-    page-break-inside: avoid;
+  body {
+    font-size: 9.5pt !important;
+    color: #111827 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  .print-diagram-wrap {
+
+  /* A correção principal: o shell da aplicação usa 100svh + overflow hidden
+     na tela. Se isso não for removido, o Chrome corta o relatório na primeira
+     página e as quebras de página nunca conseguem expandir o conteúdo. */
+  .print-app-shell,
+  .print-app-content,
+  .print-app-main {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     overflow: visible !important;
+    position: static !important;
+    flex: none !important;
+  }
+
+  .print-app-shell {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-app-shell > .app-sidebar,
+  .print-app-content > .app-header,
+  .app-sidebar,
+  .app-header,
+  nav,
+  button,
+  select,
+  input,
+  textarea,
+  .print\\:hidden,
+  .no-print,
+  .plant-no-print {
+    display: none !important;
+  }
+
+  main,
+  main > div {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .print-page,
+  .print-report,
+  .print-section {
+    display: block !important;
     width: 100% !important;
     max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
   }
+
+  /* Nunca deixar os componentes da interface criarem uma viewport própria. */
+  .h-\\[100svh\\],
+  .min-h-full,
+  .min-h-screen,
+  .overflow-hidden,
+  .overflow-auto,
+  .overflow-x-auto,
+  .overflow-y-auto {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Tabelas do relatório ocupam somente a largura útil do A4. */
+  table {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    font-size: 7.5pt !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tbody {
+    display: table-row-group !important;
+  }
+
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  th,
+  td {
+    padding: 3px 4px !important;
+    line-height: 1.2 !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+  }
+
+  /* Resumo/quadro ficam na primeira folha. */
+  .print-summary-page {
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* O diagrama SEMPRE começa em uma folha nova. */
+  .print-diagram-section {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    break-before: page !important;
+    page-break-before: always !important;
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+    margin-top: 0 !important;
+  }
+
+  .print-diagram-wrap {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
   .print-diagram-wrap svg {
     display: block !important;
     width: 100% !important;
-    min-width: 0 !important;
     max-width: 100% !important;
+    min-width: 0 !important;
     height: auto !important;
+    max-height: 245mm !important;
     padding: 0 !important;
+    margin: 0 !important;
     background: #fff !important;
+    overflow: visible !important;
   }
 
-  /* Materiais/memorial começam em uma folha própria quando necessário */
+  /* Materiais e memorial começam depois do diagrama. */
   .print-materials-section {
-    break-before: page;
-    page-break-before: always;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .print-materials-section > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 5mm !important;
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .print-break-before {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .print-break-after {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .print-avoid-break {
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
   }
 }
