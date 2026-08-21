@@ -18,13 +18,15 @@ export class SubscriptionsController {
   @Post('checkout')
   async checkout(
     @Req() req: any,
-    @Body() body: { plan: string; billingType?: AsaasBillingType; cpfCnpj?: string },
+    @Body() body: { plan: string; billingType?: AsaasBillingType; cpfCnpj?: string; name?: string; email?: string },
   ) {
     return this.subs.createAsaasSubscription(
       req.user.userId,
       String(body?.plan ?? ''),
       body?.billingType || 'UNDEFINED',
       String(body?.cpfCnpj ?? ''),
+      String(body?.name ?? ''),
+      String(body?.email ?? ''),
     );
   }
 
