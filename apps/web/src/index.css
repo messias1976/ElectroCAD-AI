@@ -163,6 +163,26 @@ code {
     position: static !important;
   }
 
+  /* O layout principal da aplicação é um flex com 100svh + overflow hidden.
+     Durante a impressão ele precisa deixar de ser um shell de tela e virar fluxo normal. */
+  .print-app-shell,
+  .print-app-content,
+  .print-app-main {
+    display: block !important;
+    flex: none !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  .print-app-shell > :first-child,
+  .print-app-content > :first-child {
+    display: none !important;
+  }
+
   .app-sidebar,
   .app-header,
   .print\:hidden,
