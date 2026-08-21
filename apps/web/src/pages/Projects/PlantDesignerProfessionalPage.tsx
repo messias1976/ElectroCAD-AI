@@ -116,9 +116,15 @@ export default function PlantDesignerProfessionalPage() {
     try { await apiFetch(`/projects/${currentProject.id}`, { method: 'PUT', body: JSON.stringify({ projectData, plantData, designData }) }); setProjects(a => a.map(p => p.id === currentProject.id ? { ...p, projectData, plantData, designData } : p)); setMessage(`Salvo com sucesso: ${rooms.length} ambientes e ${points.length} pontos.`); } catch (e) { setMessage(`Erro ao salvar: ${(e as Error).message}`); }
   }
   function print() { window.print(); }
+      return (
+        <div className="plant-professional min-h-full space-y-4 pb-8 text-left">
 
-  return <div className="plant-professional min-h-full space-y-4 pb-8 text-left">
-    <style>{`@media print{.plant-no-print{display:none!important}.plant-print{display:block!important}.plant-canvas-wrap{overflow:visible!important}.plant-canvas{width:100%!important;height:auto!important;min-width:0!important;box-shadow:none!important}.plant-tabs{display:none!important}.plant-print-block{break-inside:avoid;page-break-inside:avoid}body{background:#fff!important}@page{size:A4 portrait;margin:8mm}} .plant-canvas{background:#fff}`}</style>
+           <div className="rounded-xl border bg-slate-50 px-4 py-3 text-sm text-slate-600">
+             {message}
+           </div>
+
+    {/* restante da página */} 
+     <style>{`@media print{.plant-no-print{display:none!important}.plant-print{display:block!important}.plant-canvas-wrap{overflow:visible!important}.plant-canvas{width:100%!important;height:auto!important;min-width:0!important;box-shadow:none!important}.plant-tabs{display:none!important}.plant-print-block{break-inside:avoid;page-break-inside:avoid}body{background:#fff!important}@page{size:A4 portrait;margin:8mm}} .plant-canvas{background:#fff}`}</style>
     <div className="plant-no-print flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white p-4 shadow-sm">
       <div><Link to="/projetista" className="text-sm text-slate-500"><ArrowLeft size={15} className="mr-1 inline"/>Projetista</Link><h2 className="mt-1 text-2xl font-bold text-slate-900">Editor de Planta 2D</h2><p className="text-sm text-slate-500">Arraste e solte pontos e ambientes. A planta se ajusta automaticamente ao projeto.</p></div>
       <div className="flex flex-wrap gap-2"><select value={projectId} onChange={e => selectProject(e.target.value)} className="rounded-xl border px-3 py-2 font-semibold"><option value="">Selecionar projeto</option>{projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select><button onClick={() => void save()} className="rounded-xl border px-4 py-2 font-semibold"><Save size={16} className="mr-1 inline"/>Salvar</button><button onClick={print} className="rounded-xl border px-4 py-2 font-semibold"><Printer size={16} className="mr-1 inline"/>Imprimir</button><Link to={`/professor?projectId=${encodeURIComponent(projectId)}`} className="rounded-xl bg-violet-600 px-4 py-2 font-semibold text-white"><BrainCircuit size={16} className="mr-1 inline"/>Professor IA</Link></div>
@@ -136,5 +142,5 @@ export default function PlantDesignerProfessionalPage() {
       {activeTab === 'editor' && <div className="mt-3 rounded-xl bg-blue-50 p-4 text-sm text-blue-900">Editor ativo. Arraste qualquer ponto para posicioná-lo. O tamanho da área de trabalho acompanha a quantidade de ambientes.</div>}
     </div>
     <section className="plant-print hidden"><h1>Planta Elétrica — {currentProject?.name || 'Projeto'}</h1><p>Ambientes: {stats.rooms} · Pontos: {stats.points} · Iluminação: {stats.light} · TUG: {stats.tug} · TUE: {stats.tue} · Potência: {(stats.watts / 1000).toFixed(2)} kW</p><div className="plant-print-block mt-4">{rooms.map(r => <div key={r.id} className="mb-2 border-b pb-2"><strong>{r.name}</strong> — {(r.w / 55).toFixed(2)} × {(r.h / 55).toFixed(2)} m</div>)}</div><svg className="plant-canvas mt-5" viewBox={`0 0 ${bounds.width} ${bounds.height}`} width="100%" preserveAspectRatio="xMinYMin meet"><rect width={bounds.width} height={bounds.height} fill="white" stroke="#111"/>{rooms.map(r => <g key={r.id}><rect x={r.x} y={r.y} width={r.w} height={r.h} fill="#fff" stroke="#111" strokeWidth="2"/><text x={r.x + 8} y={r.y + 18} fontSize="12">{r.name}</text></g>)}{points.map(p => <g key={p.id}><circle cx={p.x} cy={p.y} r="10" fill={palette[p.kind].color} stroke="#111"/><text x={p.x} y={p.y + 3} textAnchor="middle" fontSize="7">{p.label}</text></g>)}</svg><h2 className="mt-6">Lista de pontos</h2>{points.map(p => <div key={`p-${p.id}`} className="text-sm">{p.label} — {palette[p.kind].label} — {rooms.find(r => r.id === p.roomId)?.name || '-'} — {p.watts} W</div>)}</section>
-  </div>;
+  </div>);
 }
