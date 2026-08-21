@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } fro
 import { AuthGuard } from '@nestjs/passport';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { SubscriptionsService } from './subscriptions.service';
-import { AsaasService } from '../payments/asaas.service';
+import { AsaasBillingType, AsaasService } from '../payments/asaas.service';
 import { AdminGuard } from '../auth/guards/roles.guard';
 
 @Controller('subscriptions')
@@ -13,6 +13,15 @@ export class SubscriptionsController {
   @Get('me')
   async me(@Req() req: any) {
     return this.subs.getMyAccess(req.user.userId);
+  }
+
+  @Post('checkout')
+  async checkout(@Req() req: any, @Body() body: { plan: string; billingType?: AsaasBillingType }) {
+    return this.subs.createAsaasSubscription(
+      req.user.userId,
+      String(body?.plan ?? ''),
+      body?.billingType || 'UNDEFINED',
+    );
   }
 
   @UseGuards(AdminGuard)
