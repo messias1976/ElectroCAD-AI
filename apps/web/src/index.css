@@ -118,7 +118,7 @@ code {
   background: var(--code-bg);
 }
 
-/* Impressão base */
+/* Impressão base e paginação do relatório técnico. */
 @media print {
   @page {
     size: A4 portrait;
@@ -129,6 +129,7 @@ code {
   body,
   #root {
     width: 100% !important;
+    max-width: none !important;
     min-width: 0 !important;
     height: auto !important;
     min-height: 0 !important;
@@ -145,21 +146,20 @@ code {
     print-color-adjust: exact !important;
   }
 
+  /* Remove qualquer limite de altura/rolagem criado pela interface. */
   #root,
   #root > div,
   main,
   main > div,
+  main > div > div,
   section,
-  article {
-    overflow: visible !important;
-  }
-
-  #root,
-  main,
-  main > div {
-    display: block !important;
+  article,
+  header,
+  footer {
     height: auto !important;
+    min-height: 0 !important;
     max-height: none !important;
+    overflow: visible !important;
     position: static !important;
   }
 
@@ -181,7 +181,7 @@ code {
     margin: 0 !important;
   }
 
-  /* Evita que cartões, tabelas e blocos longos sejam cortados por containers da tela. */
+  /* Containers da tela não podem cortar o relatório no PDF. */
   .rounded-2xl,
   .rounded-xl,
   .border,
@@ -195,9 +195,23 @@ code {
     max-height: none !important;
   }
 
-  table {
+  /* O resultado deve ocupar a largura real do A4, sem min-width de desktop. */
+  table,
+  .print-report,
+  .print-page,
+  .print-section {
     width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  table {
     border-collapse: collapse !important;
+    table-layout: fixed !important;
     page-break-inside: auto !important;
     break-inside: auto !important;
   }
@@ -206,9 +220,22 @@ code {
     display: table-header-group !important;
   }
 
+  tbody {
+    display: table-row-group !important;
+  }
+
   tr {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+  }
+
+  th,
+  td {
+    padding: 3px 4px !important;
+    font-size: 8pt !important;
+    line-height: 1.2 !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
   }
 
   h1,
@@ -223,11 +250,6 @@ code {
   .print-report,
   .print-section {
     display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
     position: static !important;
   }
 
@@ -241,13 +263,70 @@ code {
     page-break-after: always !important;
   }
 
-  .print-avoid-break,
-  .plant-print-block {
+  .print-avoid-break {
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* O diagrama começa em uma nova folha e nunca fica preso ao final da folha anterior. */
+  .print-diagram-section {
+    break-before: page !important;
+    page-break-before: always !important;
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-diagram-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .print-diagram-wrap svg,
+  .print-report svg,
+  .print-page svg,
+  .print-section svg {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  /* Materiais + memorial começam depois do diagrama. */
+  .print-materials-section {
+    display: block !important;
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .print-materials-section > div {
+    width: 100% !important;
+    margin-bottom: 6mm !important;
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Grids da interface viram fluxo vertical no papel. */
+  .print-materials-section.grid,
+  .print-materials-section[class*='grid'] {
+    display: block !important;
+  }
+
+  .print-materials-section ul {
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-materials-section li {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
 
-  /* Relatório da planta: a lista continua em páginas seguintes. */
+  /* Relatório da planta, quando impresso pela outra tela. */
   .plant-print {
     display: block !important;
     visibility: visible !important;
@@ -292,17 +371,9 @@ code {
     margin-bottom: 4mm !important;
   }
 
-  /* O editor não deve levar sua área de trabalho infinita para o papel. */
   .plant-canvas-wrap,
   .plant-canvas {
     overflow: visible !important;
     box-shadow: none !important;
-  }
-
-  /* SVGs e imagens devem respeitar a largura da folha. */
-  .print-report svg,
-  .print-page svg,
-  .print-section svg {
-    max-width: 100% !important;
   }
 }
