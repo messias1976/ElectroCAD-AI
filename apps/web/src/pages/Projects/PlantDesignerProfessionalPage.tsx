@@ -116,31 +116,88 @@ export default function PlantDesignerProfessionalPage() {
     try { await apiFetch(`/projects/${currentProject.id}`, { method: 'PUT', body: JSON.stringify({ projectData, plantData, designData }) }); setProjects(a => a.map(p => p.id === currentProject.id ? { ...p, projectData, plantData, designData } : p)); setMessage(`Salvo com sucesso: ${rooms.length} ambientes e ${points.length} pontos.`); } catch (e) { setMessage(`Erro ao salvar: ${(e as Error).message}`); }
   }
   function print() { window.print(); }
-      return (
-        <div className="plant-professional min-h-full space-y-4 pb-8 text-left">
+  return (
+    <div className="plant-professional min-h-full space-y-4 pb-8 text-left">
+      <div className="rounded-xl border bg-slate-50 px-4 py-3 text-sm text-slate-600">{message}</div>
+      <style>{`@media print{
+       *{box-shadow:none!important}
+       html,body,#root{background:#fff!important;color:#111!important;overflow:visible!important}
+       @page{size:A4 portrait;margin:10mm}
+       .plant-no-print{display:none!important}
+       .plant-print{display:block!important;width:100%!important}
+       .plant-print-sheet{break-after:page;page-break-after:always;break-inside:avoid;page-break-inside:avoid}
+       .plant-print-sheet:last-child{break-after:auto;page-break-after:auto}
+       .plant-print-list{display:block!important}
+       .plant-print-item{break-inside:avoid;page-break-inside:avoid;margin-bottom:3mm}
+       .plant-print-svg{display:block!important;width:100%!important;height:auto!important;max-width:100%!important;min-width:0!important}
+       .plant-print-table{width:100%!important;border-collapse:collapse!important;font-size:9pt!important}
+       .plant-print-table th,.plant-print-table td{border:1px solid #222!important;padding:4px!important;text-align:left!important;vertical-align:top!important}
+       .plant-print-table thead{display:table-header-group!important}
+       .plant-print-table tr{break-inside:avoid!important;page-break-inside:avoid!important}
+       .plant-print-footer{margin-top:6mm;border-top:1px solid #999;padding-top:2mm;font-size:8pt}
+     } .plant-canvas{background:#fff}`}</style>
+      <div className="plant-no-print flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white p-4 shadow-sm">
+        <div><Link to="/projetista" className="text-sm text-slate-500"><ArrowLeft size={15} className="mr-1 inline"/>Projetista</Link><h2 className="mt-1 text-2xl font-bold text-slate-900">Editor de Planta 2D</h2><p className="text-sm text-slate-500">Arraste e solte pontos e ambientes. A planta se ajusta automaticamente ao projeto.</p></div>
+        <div className="flex flex-wrap gap-2"><select value={projectId} onChange={e => selectProject(e.target.value)} className="rounded-xl border px-3 py-2 font-semibold"><option value="">Selecionar projeto</option>{projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select><button onClick={() => void save()} className="rounded-xl border px-4 py-2 font-semibold"><Save size={16} className="mr-1 inline"/>Salvar</button><button onClick={print} className="rounded-xl border px-4 py-2 font-semibold"><Printer size={16} className="mr-1 inline"/>Imprimir</button><Link to={`/professor?projectId=${encodeURIComponent(projectId)}`} className="rounded-xl bg-violet-600 px-4 py-2 font-semibold text-white"><BrainCircuit size={16} className="mr-1 inline"/>Professor IA</Link></div>
+      </div>
+      <div className="plant-no-print grid gap-3 lg:grid-cols-[240px_1fr]">
+        <aside className="rounded-2xl border bg-white p-3 shadow-sm"><div className="mb-3 font-bold">Ferramentas</div><div className="grid gap-2">{([['select','Selecionar',MousePointer2],['room','Ambiente',Maximize2],['door','Porta',DoorOpen],['window','Janela',WindowIcon],['Luz','Iluminação',Lightbulb],['TUG','TUG',MousePointer2],['TUE','TUE',Zap]] as const).map(([id,label,Icon]) => <button key={id} onClick={() => setTool(id)} className={`rounded-xl border px-3 py-2 text-left text-sm font-semibold ${tool === id ? 'border-blue-600 bg-blue-50 text-blue-700' : 'hover:bg-slate-50'}`}><Icon size={16} className="mr-2 inline"/>{label}</button>)}</div><div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">Selecione uma ferramenta e clique na planta, ou selecione um ponto/ambiente e arraste. O mesmo gesto funciona com mouse e toque.</div></aside>
+        <div className="plant-canvas-wrap overflow-auto rounded-2xl border bg-slate-100 p-3"><svg className="plant-canvas min-w-[720px] rounded-xl border bg-white" viewBox={`0 0 ${bounds.width} ${bounds.height}`} width="100%" preserveAspectRatio="xMinYMin meet" style={{ touchAction: 'none', userSelect: 'none' }} onPointerMove={move} onPointerUp={finishDrag} onPointerCancel={finishDrag} onPointerDown={e => { if (tool !== 'select') canvasAction(e); }}>
+          <defs><pattern id="plant-grid-pro" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#e2e8f0"/></pattern></defs><rect width={bounds.width} height={bounds.height} fill="url(#plant-grid-pro)"/>
+          {rooms.map(r => <g key={r.id} onPointerDown={e => { if (tool !== 'select') return; e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); setDrag({ type: 'room', id: r.id }); }} className="cursor-move"><rect x={r.x} y={r.y} width={r.w} height={r.h} rx="3" fill="#f8fafc" stroke="#334155" strokeWidth="3"/><text x={r.x + 12} y={r.y + 24} fontSize="14" fontWeight="700" fill="#0f172a">{r.name}</text><text x={r.x + 12} y={r.y + 41} fontSize="9" fill="#64748b">{(r.w / 55).toFixed(2)} × {(r.h / 55).toFixed(2)} m</text></g>)}
+          {points.map(p => { const cfg = palette[p.kind]; const isSelected = selected === p.id; return <g key={p.id} onPointerDown={e => { e.stopPropagation(); if (tool !== 'select') return; e.currentTarget.setPointerCapture(e.pointerId); setSelected(p.id); setDrag({ type: 'point', id: p.id }); setMessage(`Movendo ${p.label}`); }} className="cursor-grab"><circle cx={p.x} cy={p.y} r={isSelected ? 17 : 14} fill={cfg.color} stroke="#0f172a" strokeWidth="2"/><circle cx={p.x} cy={p.y} r="26" fill="transparent" pointerEvents="all"/><text x={p.x} y={p.y + 4} textAnchor="middle" fontSize="8" fontWeight="800" pointerEvents="none">{p.label}</text></g>; })}
+        </svg></div>
+      </div>
+      <div className="plant-no-print rounded-2xl border bg-white p-3 shadow-sm"><div className="grid grid-cols-3 gap-2 plant-tabs"><button onClick={() => setActiveTab('resumo')} className={`rounded-xl px-4 py-3 font-semibold ${activeTab === 'resumo' ? 'bg-slate-900 text-white' : 'hover:bg-slate-50'}`}><FileText size={16} className="mr-1 inline"/>Resumo</button><button onClick={() => setActiveTab('editor')} className={`rounded-xl px-4 py-3 font-semibold ${activeTab === 'editor' ? 'bg-blue-600 text-white' : 'hover:bg-slate-50'}`}><MousePointer2 size={16} className="mr-1 inline"/>Editor 2D</button><button onClick={() => { setActiveTab('professor'); if (projectId) window.location.href = `/professor?projectId=${encodeURIComponent(projectId)}`; }} className={`rounded-xl px-4 py-3 font-semibold ${activeTab === 'professor' ? 'bg-violet-600 text-white' : 'hover:bg-slate-50'}`}><BrainCircuit size={16} className="mr-1 inline"/>Professor IA</button></div>
+        {activeTab === 'resumo' && <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl bg-slate-50 p-4"><div className="text-xs text-slate-500">Ambientes</div><div className="text-2xl font-bold">{stats.rooms}</div></div><div className="rounded-xl bg-slate-50 p-4"><div className="text-xs text-slate-500">Pontos</div><div className="text-2xl font-bold">{stats.points}</div></div><div className="rounded-xl bg-slate-50 p-4"><div className="text-xs text-slate-500">TUG / TUE</div><div className="text-2xl font-bold">{stats.tug} / {stats.tue}</div></div><div className="rounded-xl bg-slate-50 p-4"><div className="text-xs text-slate-500">Potência</div><div className="text-2xl font-bold">{(stats.watts / 1000).toFixed(2)} kW</div></div></div>}
+        {activeTab === 'editor' && <div className="mt-3 rounded-xl bg-blue-50 p-4 text-sm text-blue-900">Editor ativo. Arraste qualquer ponto para posicioná-lo. O tamanho da área de trabalho acompanha a quantidade de ambientes.</div>}
+      </div>
+      <section className="plant-print hidden">
+        <div className="plant-print-sheet">
+          <h1>Projeto Elétrico — {currentProject?.name || 'Projeto'}</h1>
+          <table className="plant-print-table">
+            <tbody>
+              <tr><th>Cliente</th><td>{currentProject?.client?.name || 'Não informado'}</td></tr>
+              <tr><th>Descrição</th><td>{currentProject?.description || 'Não informada'}</td></tr>
+              <tr><th>Ambientes</th><td>{stats.rooms}</td></tr>
+              <tr><th>Pontos totais</th><td>{stats.points}</td></tr>
+              <tr><th>Iluminação</th><td>{stats.light}</td></tr>
+              <tr><th>TUG</th><td>{stats.tug}</td></tr>
+              <tr><th>TUE</th><td>{stats.tue}</td></tr>
+              <tr><th>Potência estimada</th><td>{(stats.watts / 1000).toFixed(2)} kW</td></tr>
+            </tbody>
+          </table>
+          <h2 className="mt-6">Ambientes</h2>
+          <table className="plant-print-table">
+            <thead><tr><th>Ambiente</th><th>Dimensões</th><th>Área</th><th>Portas</th><th>Janelas</th></tr></thead>
+            <tbody>{rooms.map(r => <tr key={r.id}><td>{r.name}</td><td>{(r.w / 55).toFixed(2)} × {(r.h / 55).toFixed(2)} m</td><td>{((r.w * r.h) / 3025).toFixed(2)} m²</td><td>{r.doors.length}</td><td>{r.windows.length}</td></tr>)}</tbody>
+          </table>
+          <div className="plant-print-footer">ElectroCAD-AI · Relatório do projeto · {new Date().toLocaleDateString('pt-BR')}</div>
+        </div>
 
-           <div className="rounded-xl border bg-slate-50 px-4 py-3 text-sm text-slate-600">
-             {message}
-           </div>
+        <div className="plant-print-sheet">
+          <h1>Planta Elétrica — {currentProject?.name || 'Projeto'}</h1>
+          <p>Ambientes: {stats.rooms} · Pontos: {stats.points} · Iluminação: {stats.light} · TUG: {stats.tug} · TUE: {stats.tue} · Potência: {(stats.watts / 1000).toFixed(2)} kW</p>
+          <svg className="plant-print-svg mt-5" viewBox={`0 0 ${bounds.width} ${bounds.height}`} width="100%" preserveAspectRatio="xMinYMin meet">
+            <rect width={bounds.width} height={bounds.height} fill="white" stroke="#111"/>
+            {rooms.map(r => <g key={r.id}><rect x={r.x} y={r.y} width={r.w} height={r.h} fill="#fff" stroke="#111" strokeWidth="2"/><text x={r.x + 8} y={r.y + 18} fontSize="12">{r.name}</text></g>)}
+            {points.map(p => <g key={p.id}><circle cx={p.x} cy={p.y} r="10" fill={palette[p.kind].color} stroke="#111"/><text x={p.x} y={p.y + 3} textAnchor="middle" fontSize="7">{p.label}</text></g>)}
+          </svg>
+          <div className="plant-print-footer">Planta completa · {stats.points} pontos representados</div>
+        </div>
 
-    {/* restante da página */} 
-     <style>{`@media print{.plant-no-print{display:none!important}.plant-print{display:block!important}.plant-canvas-wrap{overflow:visible!important}.plant-canvas{width:100%!important;height:auto!important;min-width:0!important;box-shadow:none!important}.plant-tabs{display:none!important}.plant-print-block{break-inside:avoid;page-break-inside:avoid}body{background:#fff!important}@page{size:A4 portrait;margin:8mm}} .plant-canvas{background:#fff}`}</style>
-    <div className="plant-no-print flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white p-4 shadow-sm">
-      <div><Link to="/projetista" className="text-sm text-slate-500"><ArrowLeft size={15} className="mr-1 inline"/>Projetista</Link><h2 className="mt-1 text-2xl font-bold text-slate-900">Editor de Planta 2D</h2><p className="text-sm text-slate-500">Arraste e solte pontos e ambientes. A planta se ajusta automaticamente ao projeto.</p></div>
-      <div className="flex flex-wrap gap-2"><select value={projectId} onChange={e => selectProject(e.target.value)} className="rounded-xl border px-3 py-2 font-semibold"><option value="">Selecionar projeto</option>{projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select><button onClick={() => void save()} className="rounded-xl border px-4 py-2 font-semibold"><Save size={16} className="mr-1 inline"/>Salvar</button><button onClick={print} className="rounded-xl border px-4 py-2 font-semibold"><Printer size={16} className="mr-1 inline"/>Imprimir</button><Link to={`/professor?projectId=${encodeURIComponent(projectId)}`} className="rounded-xl bg-violet-600 px-4 py-2 font-semibold text-white"><BrainCircuit size={16} className="mr-1 inline"/>Professor IA</Link></div>
+        {Array.from({ length: Math.max(1, Math.ceil(points.length / 24)) }, (_, page) => {
+          const pagePoints = points.slice(page * 24, (page + 1) * 24);
+          return <div className="plant-print-sheet" key={`points-page-${page}`}>
+            <h1>Lista de Pontos {page + 1}/{Math.max(1, Math.ceil(points.length / 24))}</h1>
+            <table className="plant-print-table">
+              <thead><tr><th>#</th><th>Ponto</th><th>Tipo</th><th>Ambiente</th><th>Potência</th><th>Tensão</th><th>Distância</th><th>Descrição</th></tr></thead>
+              <tbody>{pagePoints.map((p, i) => <tr key={`p-${p.id}`}><td>{page * 24 + i + 1}</td><td>{p.label}</td><td>{palette[p.kind].label}</td><td>{rooms.find(r => r.id === p.roomId)?.name || '-'}</td><td>{p.watts} W</td><td>{p.voltage} V</td><td>{p.distance} m</td><td>{p.description}</td></tr>)}</tbody>
+            </table>
+            <div className="plant-print-footer">ElectroCAD-AI · Lista de pontos · Página {page + 1}</div>
+          </div>;
+        })}
+      </section>
     </div>
-    <div className="plant-no-print grid gap-3 lg:grid-cols-[240px_1fr]">
-      <aside className="rounded-2xl border bg-white p-3 shadow-sm"><div className="mb-3 font-bold">Ferramentas</div><div className="grid gap-2">{([['select','Selecionar',MousePointer2],['room','Ambiente',Maximize2],['door','Porta',DoorOpen],['window','Janela',WindowIcon],['Luz','Iluminação',Lightbulb],['TUG','TUG',MousePointer2],['TUE','TUE',Zap]] as const).map(([id,label,Icon]) => <button key={id} onClick={() => setTool(id)} className={`rounded-xl border px-3 py-2 text-left text-sm font-semibold ${tool === id ? 'border-blue-600 bg-blue-50 text-blue-700' : 'hover:bg-slate-50'}`}><Icon size={16} className="mr-2 inline"/>{label}</button>)}</div><div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">Selecione uma ferramenta e clique na planta, ou selecione um ponto/ambiente e arraste. O mesmo gesto funciona com mouse e toque.</div></aside>
-      <div className="plant-canvas-wrap overflow-auto rounded-2xl border bg-slate-100 p-3"><svg className="plant-canvas min-w-[720px] rounded-xl border bg-white" viewBox={`0 0 ${bounds.width} ${bounds.height}`} width="100%" preserveAspectRatio="xMinYMin meet" style={{ touchAction: 'none', userSelect: 'none' }} onPointerMove={move} onPointerUp={finishDrag} onPointerCancel={finishDrag} onPointerDown={e => { if (tool !== 'select') canvasAction(e); }}>
-        <defs><pattern id="plant-grid-pro" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#e2e8f0"/></pattern></defs><rect width={bounds.width} height={bounds.height} fill="url(#plant-grid-pro)"/>
-        {rooms.map(r => <g key={r.id} onPointerDown={e => { if (tool !== 'select') return; e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); setDrag({ type: 'room', id: r.id }); }} className="cursor-move"><rect x={r.x} y={r.y} width={r.w} height={r.h} rx="3" fill="#f8fafc" stroke="#334155" strokeWidth="3"/><text x={r.x + 12} y={r.y + 24} fontSize="14" fontWeight="700" fill="#0f172a">{r.name}</text><text x={r.x + 12} y={r.y + 41} fontSize="9" fill="#64748b">{(r.w / 55).toFixed(2)} × {(r.h / 55).toFixed(2)} m</text></g>)}
-        {points.map(p => { const cfg = palette[p.kind]; const isSelected = selected === p.id; return <g key={p.id} onPointerDown={e => { e.stopPropagation(); if (tool !== 'select') return; e.currentTarget.setPointerCapture(e.pointerId); setSelected(p.id); setDrag({ type: 'point', id: p.id }); setMessage(`Movendo ${p.label}`); }} className="cursor-grab"><circle cx={p.x} cy={p.y} r={isSelected ? 17 : 14} fill={cfg.color} stroke="#0f172a" strokeWidth="2"/><circle cx={p.x} cy={p.y} r="26" fill="transparent" pointerEvents="all"/><text x={p.x} y={p.y + 4} textAnchor="middle" fontSize="8" fontWeight="800" pointerEvents="none">{p.label}</text></g>; })}
-      </svg></div>
-    </div>
-    <div className="plant-no-print rounded-2xl border bg-white p-3 shadow-sm"><div className="grid grid-cols-3 gap-2 plant-tabs"><button onClick={() => setActiveTab('resumo')} className={`rounded-xl px-4 py-3 font-semibold ${activeTab === 'resumo' ? 'bg-slate-900 text-white' : 'hover:bg-slate-50'}`}><FileText size={16} className="mr-1 inline"/>Resumo</button><button onClick={() => setActiveTab('editor')} className={`rounded-xl px-4 py-3 font-semibold ${activeTab === 'editor' ? 'bg-blue-600 text-white' : 'hover:bg-slate-50'}`}><MousePointer2 size={16} className="mr-1 inline"/>Editor 2D</button><button onClick={() => { setActiveTab('professor'); if (projectId) window.location.href = `/professor?projectId=${encodeURIComponent(projectId)}`; }} className={`rounded-xl px-4 py-3 font-semibold ${activeTab === 'professor' ? 'bg-violet-600 text-white' : 'hover:bg-slate-50'}`}><BrainCircuit size={16} className="mr-1 inline"/>Professor IA</button></div>
-      {activeTab === 'resumo' && <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl bg-slate-50 p-4"><div className="text-xs text-slate-500">Ambientes</div><div className="text-2xl font-bold">{stats.rooms}</div></div><div className="rounded-xl bg-slate-50 p-4"><div className="text-xs text-slate-500">Pontos</div><div className="text-2xl font-bold">{stats.points}</div></div><div className="rounded-xl bg-slate-50 p-4"><div className="text-xs text-slate-500">TUG / TUE</div><div className="text-2xl font-bold">{stats.tug} / {stats.tue}</div></div><div className="rounded-xl bg-slate-50 p-4"><div className="text-xs text-slate-500">Potência</div><div className="text-2xl font-bold">{(stats.watts / 1000).toFixed(2)} kW</div></div></div>}
-      {activeTab === 'editor' && <div className="mt-3 rounded-xl bg-blue-50 p-4 text-sm text-blue-900">Editor ativo. Arraste qualquer ponto para posicioná-lo. O tamanho da área de trabalho acompanha a quantidade de ambientes.</div>}
-    </div>
-    <section className="plant-print hidden"><h1>Planta Elétrica — {currentProject?.name || 'Projeto'}</h1><p>Ambientes: {stats.rooms} · Pontos: {stats.points} · Iluminação: {stats.light} · TUG: {stats.tug} · TUE: {stats.tue} · Potência: {(stats.watts / 1000).toFixed(2)} kW</p><div className="plant-print-block mt-4">{rooms.map(r => <div key={r.id} className="mb-2 border-b pb-2"><strong>{r.name}</strong> — {(r.w / 55).toFixed(2)} × {(r.h / 55).toFixed(2)} m</div>)}</div><svg className="plant-canvas mt-5" viewBox={`0 0 ${bounds.width} ${bounds.height}`} width="100%" preserveAspectRatio="xMinYMin meet"><rect width={bounds.width} height={bounds.height} fill="white" stroke="#111"/>{rooms.map(r => <g key={r.id}><rect x={r.x} y={r.y} width={r.w} height={r.h} fill="#fff" stroke="#111" strokeWidth="2"/><text x={r.x + 8} y={r.y + 18} fontSize="12">{r.name}</text></g>)}{points.map(p => <g key={p.id}><circle cx={p.x} cy={p.y} r="10" fill={palette[p.kind].color} stroke="#111"/><text x={p.x} y={p.y + 3} textAnchor="middle" fontSize="7">{p.label}</text></g>)}</svg><h2 className="mt-6">Lista de pontos</h2>{points.map(p => <div key={`p-${p.id}`} className="text-sm">{p.label} — {palette[p.kind].label} — {rooms.find(r => r.id === p.roomId)?.name || '-'} — {p.watts} W</div>)}</section>
-  </div>);
+  );
 }
