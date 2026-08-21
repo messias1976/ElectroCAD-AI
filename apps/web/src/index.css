@@ -118,14 +118,191 @@ code {
   background: var(--code-bg);
 }
 
-/* Impressão: somente o conteúdo da página, sem navegação, cabeçalho ou controles. */
+/* Impressão base */
 @media print {
-  @page { margin: 12mm; }
-  html, body, #root { width: 100% !important; min-height: auto !important; margin: 0 !important; padding: 0 !important; border: 0 !important; background: #fff !important; }
-  .app-sidebar, .app-header, .print\:hidden, nav, button, select, input, textarea { display: none !important; }
-  main { overflow: visible !important; padding: 0 !important; }
-  .print-page { display: block !important; width: 100% !important; }
-  .print-break-before { break-before: page; page-break-before: always; }
-  .print-break-after { break-after: page; page-break-after: always; }
-  .no-print { display: none !important; }
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  body {
+    color: #111827 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #root,
+  #root > div,
+  main,
+  main > div,
+  section,
+  article {
+    overflow: visible !important;
+  }
+
+  #root,
+  main,
+  main > div {
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    position: static !important;
+  }
+
+  .app-sidebar,
+  .app-header,
+  .print\:hidden,
+  nav,
+  button,
+  select,
+  input,
+  textarea,
+  .no-print,
+  .plant-no-print {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Evita que cartões, tabelas e blocos longos sejam cortados por containers da tela. */
+  .rounded-2xl,
+  .rounded-xl,
+  .border,
+  .shadow-sm,
+  .shadow,
+  .overflow-hidden,
+  .overflow-auto,
+  .overflow-x-auto,
+  .overflow-y-auto {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .print-page,
+  .print-report,
+  .print-section {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  .print-break-before {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .print-break-after {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .print-avoid-break,
+  .plant-print-block {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Relatório da planta: a lista continua em páginas seguintes. */
+  .plant-print {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    color: #111827 !important;
+    background: #fff !important;
+  }
+
+  .plant-print > * {
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .plant-print h1 {
+    font-size: 18pt !important;
+    margin: 0 0 4mm !important;
+  }
+
+  .plant-print h2 {
+    font-size: 12pt !important;
+    margin: 6mm 0 3mm !important;
+  }
+
+  .plant-print svg.plant-canvas {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 240mm !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .plant-print .plant-print-block {
+    margin-bottom: 4mm !important;
+  }
+
+  /* O editor não deve levar sua área de trabalho infinita para o papel. */
+  .plant-canvas-wrap,
+  .plant-canvas {
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  /* SVGs e imagens devem respeitar a largura da folha. */
+  .print-report svg,
+  .print-page svg,
+  .print-section svg {
+    max-width: 100% !important;
+  }
 }
