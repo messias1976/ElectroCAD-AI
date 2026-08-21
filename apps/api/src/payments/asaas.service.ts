@@ -16,10 +16,7 @@ export class AsaasService {
     const token = this.config.get<string>('ASAAS_API_KEY') || '';
     this.client = axios.create({
       baseURL,
-      headers: {
-        'Content-Type': 'application/json',
-        access_token: token,
-      },
+      headers: { 'Content-Type': 'application/json', access_token: token },
       timeout: 15000,
     });
   }
@@ -34,7 +31,7 @@ export class AsaasService {
   }
 
   async createSubscription(input: {
-    customerId: string;
+    customer: string;
     billingType: AsaasBillingType;
     value: number;
     nextDueDate: string;
@@ -68,14 +65,13 @@ export class AsaasService {
 
   async createCharge(dto: CreateChargeDto) {
     try {
-      const body = {
+      const res = await this.client.post('/payments', {
         customer: dto.customerId,
         billingType: dto.billingType,
         dueDate: dto.dueDate,
         value: dto.value,
         description: dto.description,
-      };
-      const res = await this.client.post('/payments', body);
+      });
       return res.data;
     } catch (err: any) {
       this.logger.error('Erro ao criar cobrança Asaas', err?.response?.data || err.message);
