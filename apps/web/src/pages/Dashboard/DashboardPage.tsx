@@ -4,288 +4,51 @@ import { Link } from 'react-router-dom';
 import { fetchProfile, getStoredUser } from '../../services/auth';
 import { apiFetch } from '../../services/api';
 
-type Subscriber = {
-  id: string; username: string; email?: string | null; plan: string;
-  subscriptionStatus: string; daysRemaining: number; trialEndsAt: string;
-  requiresSubscription: boolean; hasActiveSubscription: boolean;
-  provider?: string | null; providerId?: string | null;
-};
+type Subscriber = { id: string; username: string; email?: string | null; plan: string; subscriptionStatus: string; daysRemaining: number; trialEndsAt: string; requiresSubscription: boolean; hasActiveSubscription: boolean; provider?: string | null; providerId?: string | null };
 
 export default function DashboardPage() {
-  const [user, setUser] = useState(getStoredUser());
-  const [authLoading, setAuthLoading] = useState(true);
-  const [now, setNow] = useState(Date.now());
-  const isAdmin = user?.role === 'ADMIN';
-  const [subs, setSubs] = useState<Subscriber[]>([]);
-  const [access, setAccess] = useState<any>(null);
-  const [clients, setClients] = useState<any[]>([]);
-  const [projects, setProjects] = useState<any[]>([]);
-  const [plans, setPlans] = useState<any[]>([]);
-  const [selected, setSelected] = useState<Subscriber | null>(null);
-  const [trialDays, setTrialDays] = useState('7');
-  const [savingAction, setSavingAction] = useState(false);
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [user, setUser] = useState(getStoredUser()); const [authLoading, setAuthLoading] = useState(true); const [now, setNow] = useState(Date.now()); const isAdmin = user?.role === 'ADMIN';
+  const [subs, setSubs] = useState<Subscriber[]>([]); const [access, setAccess] = useState<any>(null); const [clients, setClients] = useState<any[]>([]); const [projects, setProjects] = useState<any[]>([]); const [plans, setPlans] = useState<any[]>([]); const [selected, setSelected] = useState<Subscriber | null>(null); const [trialDays, setTrialDays] = useState('7'); const [savingAction, setSavingAction] = useState(false); const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isAdmin || authLoading) return;
-    apiFetch('/plans').then((data) => setPlans(Array.isArray(data) ? data : [])).catch(() => setPlans([]));
-  }, [isAdmin, authLoading]);
-
-
-  useEffect(() => {
-    fetchProfile().then((profile) => setUser(profile)).catch(() => undefined).finally(() => setAuthLoading(false));
-    const timer = window.setInterval(() => setNow(Date.now()), 60000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (isAdmin) {
-      apiFetch('/subscriptions/admin/overview').then(setSubs).catch(() => setSubs([]));
-    } else {
-      apiFetch('/subscriptions/me').then(setAccess).catch(() => null);
-      apiFetch('/clients').then(setClients).catch(() => setClients([]));
-      apiFetch('/projects').then(setProjects).catch(() => setProjects([]));
-    }
-  }, [isAdmin, authLoading]);
-
+  useEffect(() => { if (!isAdmin || authLoading) return; apiFetch('/plans').then((data) => setPlans(Array.isArray(data) ? data : [])).catch(() => setPlans([])); }, [isAdmin, authLoading]);
+  useEffect(() => { fetchProfile().then((profile) => setUser(profile)).catch(() => undefined).finally(() => setAuthLoading(false)); const timer = window.setInterval(() => setNow(Date.now()), 60000); return () => window.clearInterval(timer); }, []);
+  useEffect(() => { if (authLoading) return; if (isAdmin) apiFetch('/subscriptions/admin/overview').then(setSubs).catch(() => setSubs([])); else { apiFetch('/subscriptions/me').then(setAccess).catch(() => null); apiFetch('/clients').then(setClients).catch(() => setClients([])); apiFetch('/projects').then(setProjects).catch(() => setProjects([])); } }, [isAdmin, authLoading]);
   if (authLoading) return <div className="flex min-h-[50vh] items-center justify-center text-slate-500">Carregando seu painel...</div>;
 
   if (!isAdmin) {
+    const hasPlan = Boolean(access?.plan && access.plan !== 'Teste gratuito');
+    const statusText = access?.subscriptionStatus === 'ACTIVE' ? 'Plano ativo' : access?.subscriptionStatus === 'PENDING' ? 'Aguardando confirmação do pagamento' : access?.subscriptionStatus === 'SUSPENDED' ? 'Plano suspenso' : access?.subscriptionStatus === 'CANCELLED' ? 'Plano cancelado' : 'Teste gratuito';
     return (
       <div className="space-y-6 pb-12">
-        <div><h2 className="text-3xl font-bold text-slate-900">Meu painel</h2><p className="mt-2 text-sm text-slate-500">Seu espaço de trabalho do ElectroCAD-AI.</p></div>
-        {access && !access.hasActiveSubscription && (
-          <div className={`flex flex-wrap items-center justify-between gap-4 rounded-3xl border p-5 ${access.requiresSubscription ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
-            <div><b>{access.requiresSubscription ? 'Seu período gratuito terminou.' : `${access.daysRemaining} dia(s) de teste gratuito restantes.`}</b><p className="mt-1 text-sm text-slate-600">Para continuar após o período gratuito, escolha um plano.</p></div>
-            <Link to="/assinar" className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white">Ver planos e assinar</Link>
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-3xl font-bold text-slate-900">Meu painel</h2><p className="mt-2 text-sm text-slate-500">Seu espaço de trabalho do ElectroCAD-AI.</p></div><Link to="/perfil" className="rounded-xl border bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">Meu perfil</Link></div>
+        {access && <div className={`rounded-3xl border p-5 ${access.hasActiveSubscription ? 'border-emerald-200 bg-emerald-50' : access.requiresSubscription ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
+          <div className="flex flex-wrap items-center justify-between gap-5">
+            <div><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Sua assinatura</p><h3 className="mt-1 text-2xl font-bold text-slate-900">{hasPlan ? `Plano ${access.plan}` : 'Teste gratuito'}</h3><p className="mt-1 text-sm text-slate-600">{statusText}</p></div>
+            <div className="flex flex-wrap items-center gap-3"><div className="rounded-2xl bg-white/80 px-4 py-3 text-right"><p className="text-xs text-slate-500">Tempo gratuito restante</p><b className="text-lg text-slate-900">{access.daysRemaining} dia(s)</b><p className="text-xs text-slate-500">até {access.trialEndsAt ? new Date(access.trialEndsAt).toLocaleDateString('pt-BR') : '—'}</p></div>{!hasPlan && <Link to="/assinar" className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white">Ver planos e assinar</Link>}{hasPlan && <Link to="/perfil" className="rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800">Gerenciar perfil</Link>}</div>
           </div>
-        )}
-        <div className="grid gap-4 md:grid-cols-4">
-          {[
-            ['Clientes', clients.length, 'Cadastros ativos'],
-            ['Projetos', projects.length, 'Projetos no seu portfólio'],
-            ['Plantas', projects.filter((p) => Boolean(p.plantData)).length, 'Projetos com planta salva'],
-            ['Dimensionamentos', projects.filter((p) => Boolean(p.designData)).length, 'Projetos com dados do projetista'],
-          ].map(([title, value, text]) => <div key={String(title)} className="rounded-2xl border bg-white p-5 shadow-sm"><p className="text-sm text-slate-500">{title}</p><b className="mt-1 block text-3xl text-slate-900">{value}</b><span className="text-xs text-slate-500">{text}</span></div>)}
-        </div>
-
+        </div>}
+        <div className="grid gap-4 md:grid-cols-4">{[['Clientes', clients.length, 'Cadastros ativos'], ['Projetos', projects.length, 'Projetos no seu portfólio'], ['Plantas', projects.filter((p) => Boolean(p.plantData)).length, 'Projetos com planta salva'], ['Dimensionamentos', projects.filter((p) => Boolean(p.designData)).length, 'Projetos com dados do projetista']].map(([title, value, text]) => <div key={String(title)} className="rounded-2xl border bg-white p-5 shadow-sm"><p className="text-sm text-slate-500">{title}</p><b className="mt-1 block text-3xl text-slate-900">{value}</b><span className="text-xs text-slate-500">{text}</span></div>)}</div>
         <div className="grid gap-6 lg:grid-cols-2">
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between"><div><h3 className="text-xl font-semibold">Meus clientes</h3><p className="text-sm text-slate-500">Dados reais da sua conta.</p></div><Link to="/clients" className="rounded-xl border px-3 py-2 text-sm font-semibold">Ver todos</Link></div>
-            <div className="mt-4 space-y-2">
-              {clients.length === 0 ? <p className="text-sm text-slate-500">Nenhum cliente cadastrado.</p> : clients.slice(0, 5).map((client) => <div key={client.id} className="flex items-center justify-between rounded-xl bg-slate-50 p-3"><div><b>{client.name}</b><p className="text-xs text-slate-500">{client.segment}</p></div><span className="text-xs text-slate-400">{client.createdAt ? new Date(client.createdAt).toLocaleDateString('pt-BR') : ''}</span></div>)}
-            </div>
-          </section>
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between"><div><h3 className="text-xl font-semibold">Projetos recentes</h3><p className="text-sm text-slate-500">Cada projeto conecta cliente, planta, projetista e Professor IA.</p></div><Link to="/projects" className="rounded-xl border px-3 py-2 text-sm font-semibold">Ver projetos</Link></div>
-            <div className="mt-4 space-y-2">
-              {projects.length === 0 ? <p className="text-sm text-slate-500">Nenhum projeto cadastrado.</p> : projects.slice(0, 5).map((project) => <div key={project.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"><div><b>{project.name}</b><p className="text-xs text-slate-500">Cliente: {project.client?.name || 'Não informado'}</p></div><div className="flex gap-2"><Link to={`/planta?projectId=${encodeURIComponent(project.id)}`} className="rounded-lg border bg-white px-2.5 py-1.5 text-xs font-semibold">Planta</Link><Link to={`/projetista?projectId=${encodeURIComponent(project.id)}`} className="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white">Projetista</Link></div></div>)}
-            </div>
-          </section>
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><div className="flex items-center justify-between"><div><h3 className="text-xl font-semibold">Meus clientes</h3><p className="text-sm text-slate-500">Dados reais da sua conta.</p></div><Link to="/clients" className="rounded-xl border px-3 py-2 text-sm font-semibold">Ver todos</Link></div><div className="mt-4 space-y-2">{clients.length === 0 ? <p className="text-sm text-slate-500">Nenhum cliente cadastrado.</p> : clients.slice(0, 5).map((client) => <div key={client.id} className="flex items-center justify-between rounded-xl bg-slate-50 p-3"><div><b>{client.name}</b><p className="text-xs text-slate-500">{client.segment}</p></div><span className="text-xs text-slate-400">{client.createdAt ? new Date(client.createdAt).toLocaleDateString('pt-BR') : ''}</span></div>)}</div></section>
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"><div className="flex items-center justify-between"><div><h3 className="text-xl font-semibold">Projetos recentes</h3><p className="text-sm text-slate-500">Cada projeto conecta cliente, planta, projetista e Professor IA.</p></div><Link to="/projects" className="rounded-xl border px-3 py-2 text-sm font-semibold">Ver projetos</Link></div><div className="mt-4 space-y-2">{projects.length === 0 ? <p className="text-sm text-slate-500">Nenhum projeto cadastrado.</p> : projects.slice(0, 5).map((project) => <div key={project.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"><div><b>{project.name}</b><p className="text-xs text-slate-500">Cliente: {project.client?.name || 'Não informado'}</p></div><div className="flex gap-2"><Link to={`/planta?projectId=${encodeURIComponent(project.id)}`} className="rounded-lg border bg-white px-2.5 py-1.5 text-xs font-semibold">Planta</Link><Link to={`/projetista?projectId=${encodeURIComponent(project.id)}`} className="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white">Projetista</Link></div></div>)}</div></section>
         </div>
       </div>
     );
   }
 
- 
-
-  const runAction = async (label: string, path: string, options: RequestInit) => {
-    setSavingAction(true);
-    setActionMessage(null);
-    try {
-      await apiFetch(path, options);
-      const refreshed = await apiFetch('/subscriptions/admin/overview');
-      const nextSubs = Array.isArray(refreshed) ? refreshed : [];
-      setSubs(nextSubs);
-      if (selected) {
-        const updated = nextSubs.find((item: Subscriber) => item.id === selected.id);
-        if (updated) setSelected(updated);
-      }
-      setActionMessage(`✓ ${label}`);
-    } catch (error) {
-      setActionMessage(`Erro: ${(error as Error).message}`);
-    } finally {
-      setSavingAction(false);
-    }
-  };
-
-  const extendSelectedTrial = async () => {
-    if (!selected) return;
-    const days = Number(trialDays);
-    if (!days || days < 1) {
-      setActionMessage('Informe pelo menos 1 dia.');
-      return;
-    }
-    await runAction(
-      `Período estendido em ${days} dia(s).`,
-      `/subscriptions/admin/users/${selected.id}/trial`,
-      { method: 'PATCH', body: JSON.stringify({ days }) },
-    );
-  };
-
-  const changeSelectedPlan = async (plan: string) => {
-    if (!selected) return;
-    await runAction(
-      `Plano alterado para ${plan}.`,
-      `/subscriptions/admin/users/${selected.id}/plan`,
-      { method: 'PATCH', body: JSON.stringify({ plan }) },
-    );
-  };
-
-  const changeSelectedStatus = async (status: string) => {
-    if (!selected) return;
-    await runAction(
-      `Status alterado para ${status}.`,
-      `/subscriptions/admin/users/${selected.id}/status`,
-      { method: 'PATCH', body: JSON.stringify({ status }) },
-    );
-  };
-
-  const deleteSelected = async () => {
-    if (!selected) return;
-    if (!window.confirm(`Excluir definitivamente o usuário ${selected.username}? Esta ação também remove os projetos, clientes e assinaturas dele.`)) return;
-    await runAction(
-      'Assinante excluído.',
-      `/subscriptions/admin/users/${selected.id}`,
-      { method: 'DELETE' },
-    );
-    setSelected(null);
-  };
-
-  const active = subs.filter(s => s.hasActiveSubscription).length;
-  const trial = subs.filter(s => !s.hasActiveSubscription && !s.requiresSubscription).length;
-  const expired = subs.filter(s => s.requiresSubscription).length;
-  const suspended = subs.filter(s => s.subscriptionStatus === 'SUSPENDED').length;
-  const remainingLabel = (trialEndsAt: string) => {
-    const diff = Math.max(0, new Date(trialEndsAt).getTime() - now);
-    if (diff <= 0) return '0 dias grátis';
-    const days = Math.floor(diff / 86400000);
-    const hours = Math.floor((diff % 86400000) / 3600000);
-    const minutes = Math.floor((diff % 3600000) / 60000);
-    return `Restam ${days}d ${hours}h ${minutes}min grátis`;
-  };
-
+  const runAction = async (label: string, path: string, options: RequestInit) => { setSavingAction(true); setActionMessage(null); try { await apiFetch(path, options); const refreshed = await apiFetch('/subscriptions/admin/overview'); const nextSubs = Array.isArray(refreshed) ? refreshed : []; setSubs(nextSubs); if (selected) { const updated = nextSubs.find((item: Subscriber) => item.id === selected.id); if (updated) setSelected(updated); } setActionMessage(`✓ ${label}`); } catch (error) { setActionMessage(`Erro: ${(error as Error).message}`); } finally { setSavingAction(false); } };
+  const extendSelectedTrial = async () => { if (!selected) return; const days = Number(trialDays); if (!days || days < 1) { setActionMessage('Informe pelo menos 1 dia.'); return; } await runAction(`Período estendido em ${days} dia(s).`, `/subscriptions/admin/users/${selected.id}/trial`, { method: 'PATCH', body: JSON.stringify({ days }) }); };
+  const changeSelectedPlan = async (plan: string) => { if (!selected) return; await runAction(`Plano alterado para ${plan}.`, `/subscriptions/admin/users/${selected.id}/plan`, { method: 'PATCH', body: JSON.stringify({ plan }) }); };
+  const changeSelectedStatus = async (status: string) => { if (!selected) return; await runAction(`Status alterado para ${status}.`, `/subscriptions/admin/users/${selected.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }); };
+  const deleteSelected = async () => { if (!selected) return; if (!window.confirm(`Excluir definitivamente o usuário ${selected.username}? Esta ação também remove os projetos, clientes e assinaturas dele.`)) return; await runAction('Assinante excluído.', `/subscriptions/admin/users/${selected.id}`, { method: 'DELETE' }); setSelected(null); };
+  const active = subs.filter(s => s.hasActiveSubscription).length; const trial = subs.filter(s => !s.hasActiveSubscription && !s.requiresSubscription).length; const expired = subs.filter(s => s.requiresSubscription).length; const suspended = subs.filter(s => s.subscriptionStatus === 'SUSPENDED').length;
+  const remainingLabel = (trialEndsAt: string) => { const diff = Math.max(0, new Date(trialEndsAt).getTime() - now); if (diff <= 0) return '0 dias grátis'; const days = Math.floor(diff / 86400000); const hours = Math.floor((diff % 86400000) / 3600000); const minutes = Math.floor((diff % 3600000) / 60000); return `Restam ${days}d ${hours}h ${minutes}min grátis`; };
   return (
-    <div className="space-y-6 pb-12">
-      <div>
-        <h2 className="text-3xl font-bold text-slate-900">Painel administrativo SaaS</h2>
-        <p className="mt-2 text-sm text-slate-500">Controle assinantes, planos, testes, acesso e pagamentos em um único lugar.</p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {[
-          ['Assinantes', subs.length, Users],
-          ['Ativos', active, CreditCard],
-          ['Em teste', trial, Clock3],
-          ['Expirados', expired, AlertTriangle],
-          ['Suspensos', suspended, AlertTriangle],
-        ].map(([label, value, Icon]: any) => (
-          <div key={label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <Icon size={20} className="text-blue-600" />
-            <p className="mt-3 text-sm text-slate-500">{label}</p>
-            <b className="text-2xl text-slate-900">{value}</b>
-          </div>
-        ))}
-      </div>
-
-      {actionMessage && (
-        <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${actionMessage.startsWith('Erro') ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
-          {actionMessage}
-        </div>
-      )}
-
-      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 p-5">
-          <div>
-            <h3 className="text-xl font-bold text-slate-900">Gestão de assinantes</h3>
-            <p className="text-sm text-slate-500">Selecione um cliente para controlar plano, trial, acesso e assinatura.</p>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="p-4">Usuário</th>
-                <th className="p-4">Plano</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Trial</th>
-                <th className="p-4">Pagamento</th>
-                <th className="p-4">Ação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {subs.map((s) => (
-                <tr key={s.id} className="border-t border-slate-100">
-                  <td className="p-4"><b>{s.username}</b><div className="text-xs text-slate-500">{s.email || 'Sem e-mail'}</div></td>
-                  <td className="p-4 font-medium">{s.plan}</td>
-                  <td className="p-4">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${s.subscriptionStatus === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : s.subscriptionStatus === 'SUSPENDED' ? 'bg-orange-100 text-orange-700' : s.requiresSubscription ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
-                      {s.subscriptionStatus === 'ACTIVE' ? 'Ativo' : s.subscriptionStatus === 'SUSPENDED' ? 'Suspenso' : s.requiresSubscription ? 'Expirado' : 'Teste grátis'}
-                    </span>
-                  </td>
-                  <td className="p-4">{s.hasActiveSubscription ? '—' : <div><b>{remainingLabel(s.trialEndsAt)}</b><div className="text-xs text-slate-500">até {new Date(s.trialEndsAt).toLocaleDateString('pt-BR')}</div></div>}</td>
-                  <td className="p-4"><div>{s.provider || '—'}</div><div className="text-xs text-slate-500">{s.providerId || 'Sem ID Asaas'}</div></td>
-                  <td className="p-4"><button type="button" onClick={() => { setSelected(s); setActionMessage(null); }} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">Gerenciar</button></td>
-                </tr>
-              ))}
-              {!subs.length && <tr><td colSpan={6} className="p-8 text-center text-slate-500">Nenhum assinante encontrado.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {selected && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/50 p-3 sm:items-center sm:p-6">
-          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-7">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Gestão do assinante</p>
-                <h3 className="mt-1 text-2xl font-bold text-slate-900">{selected.username}</h3>
-                <p className="text-sm text-slate-500">{selected.email || 'Sem e-mail'}</p>
-              </div>
-              <button type="button" onClick={() => setSelected(null)} className="rounded-lg border px-3 py-2 text-sm">Fechar</button>
-            </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Plano</p><b>{selected.plan}</b></div>
-              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Status</p><b>{selected.subscriptionStatus}</b></div>
-              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Asaas</p><b className="break-all text-xs">{selected.providerId || 'Não vinculado'}</b></div>
-            </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 p-4">
-                <h4 className="font-semibold">Estender período gratuito</h4>
-                <p className="mt-1 text-xs text-slate-500">Adiciona dias ao período atual, inclusive após expirar.</p>
-                <div className="mt-3 flex gap-2"><input type="number" min="1" value={trialDays} onChange={(e) => setTrialDays(e.target.value)} className="w-24 rounded-lg border px-3 py-2" /><button disabled={savingAction} onClick={extendSelectedTrial} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Adicionar dias</button></div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 p-4">
-                <h4 className="font-semibold">Alterar plano</h4>
-                <p className="mt-1 text-xs text-slate-500">Atualiza o plano associado à conta.</p>
-                <select disabled={savingAction} value={selected.plan === 'Teste gratuito' ? '' : selected.plan} onChange={(e) => e.target.value && changeSelectedPlan(e.target.value)} className="mt-3 w-full rounded-lg border px-3 py-2">
-                  <option value="">Selecione um plano</option>
-                  {plans.map((plan) => <option key={plan.id} value={plan.name}>{plan.name} — {plan.price}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-2xl border border-slate-200 p-4">
-              <h4 className="font-semibold">Controle de acesso e assinatura</h4>
-              <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                <button disabled={savingAction} onClick={() => changeSelectedStatus('ACTIVE')} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Reativar</button>
-                <button disabled={savingAction} onClick={() => changeSelectedStatus('SUSPENDED')} className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Suspender</button>
-                <button disabled={savingAction} onClick={() => changeSelectedStatus('CANCELLED')} className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Cancelar assinatura</button>
-              </div>
-              <p className="mt-3 text-xs text-slate-500">Status atual: {selected.subscriptionStatus}. O identificador Asaas aparece acima quando a assinatura/cobrança estiver vinculada.</p>
-            </div>
-
-            <div className="mt-4 border-t border-slate-200 pt-4">
-              <button disabled={savingAction} onClick={deleteSelected} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50">Excluir assinante e seus dados</button>
-            </div>
-          </div>
-        </div>
-      )}
+    <div className="space-y-6 pb-12"><div><h2 className="text-3xl font-bold text-slate-900">Painel administrativo SaaS</h2><p className="mt-2 text-sm text-slate-500">Controle assinantes, planos, testes, acesso e pagamentos em um único lugar.</p></div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">{[['Assinantes', subs.length, Users], ['Ativos', active, CreditCard], ['Em teste', trial, Clock3], ['Expirados', expired, AlertTriangle], ['Suspensos', suspended, AlertTriangle]].map(([label, value, Icon]: any) => <div key={label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><Icon size={20} className="text-blue-600" /><p className="mt-3 text-sm text-slate-500">{label}</p><b className="text-2xl text-slate-900">{value}</b></div>)}</div>
+      {actionMessage && <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${actionMessage.startsWith('Erro') ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>{actionMessage}</div>}
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-200 p-5"><h3 className="text-xl font-bold text-slate-900">Gestão de assinantes</h3><p className="text-sm text-slate-500">Selecione um cliente para controlar plano, trial, acesso e assinatura.</p></div><div className="overflow-x-auto"><table className="w-full min-w-[900px] text-left text-sm"><thead className="bg-slate-50"><tr><th className="p-4">Usuário</th><th className="p-4">Plano</th><th className="p-4">Status</th><th className="p-4">Trial</th><th className="p-4">Pagamento</th><th className="p-4">Ação</th></tr></thead><tbody>{subs.map((s) => <tr key={s.id} className="border-t border-slate-100"><td className="p-4"><b>{s.username}</b><div className="text-xs text-slate-500">{s.email || 'Sem e-mail'}</div></td><td className="p-4 font-medium">{s.plan}</td><td className="p-4"><span className={`rounded-full px-3 py-1 text-xs font-semibold ${s.subscriptionStatus === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : s.subscriptionStatus === 'SUSPENDED' ? 'bg-orange-100 text-orange-700' : s.requiresSubscription ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{s.subscriptionStatus === 'ACTIVE' ? 'Ativo' : s.subscriptionStatus === 'SUSPENDED' ? 'Suspenso' : s.requiresSubscription ? 'Expirado' : 'Teste grátis'}</span></td><td className="p-4">{s.hasActiveSubscription ? '—' : <div><b>{remainingLabel(s.trialEndsAt)}</b><div className="text-xs text-slate-500">até {new Date(s.trialEndsAt).toLocaleDateString('pt-BR')}</div></div>}</td><td className="p-4"><div>{s.provider || '—'}</div><div className="text-xs text-slate-500">{s.providerId || 'Sem ID Asaas'}</div></td><td className="p-4"><button type="button" onClick={() => { setSelected(s); setActionMessage(null); }} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">Gerenciar</button></td></tr>)}{!subs.length && <tr><td colSpan={6} className="p-8 text-center text-slate-500">Nenhum assinante encontrado.</td></tr>}</tbody></table></div></section>
+      {selected && <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/50 p-3 sm:items-center sm:p-6"><div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-7"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wider text-blue-600">Gestão do assinante</p><h3 className="mt-1 text-2xl font-bold text-slate-900">{selected.username}</h3><p className="text-sm text-slate-500">{selected.email || 'Sem e-mail'}</p></div><button type="button" onClick={() => setSelected(null)} className="rounded-lg border px-3 py-2 text-sm">Fechar</button></div><div className="mt-6 grid gap-3 sm:grid-cols-3"><div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Plano</p><b>{selected.plan}</b></div><div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Status</p><b>{selected.subscriptionStatus}</b></div><div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Asaas</p><b className="break-all text-xs">{selected.providerId || 'Não vinculado'}</b></div></div><div className="mt-6 grid gap-4 sm:grid-cols-2"><div className="rounded-2xl border border-slate-200 p-4"><h4 className="font-semibold">Estender período gratuito</h4><p className="mt-1 text-xs text-slate-500">Adiciona dias ao período atual.</p><div className="mt-3 flex gap-2"><input type="number" min="1" value={trialDays} onChange={(e) => setTrialDays(e.target.value)} className="w-24 rounded-lg border px-3 py-2" /><button disabled={savingAction} onClick={extendSelectedTrial} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Adicionar dias</button></div></div><div className="rounded-2xl border border-slate-200 p-4"><h4 className="font-semibold">Alterar plano</h4><select disabled={savingAction} value={selected.plan === 'Teste gratuito' ? '' : selected.plan} onChange={(e) => e.target.value && changeSelectedPlan(e.target.value)} className="mt-3 w-full rounded-lg border px-3 py-2"><option value="">Selecione um plano</option>{plans.map((plan) => <option key={plan.id} value={plan.name}>{plan.name} — {plan.price}</option>)}</select></div></div><div className="mt-4 rounded-2xl border border-slate-200 p-4"><h4 className="font-semibold">Controle de acesso e assinatura</h4><div className="mt-3 grid gap-2 sm:grid-cols-3"><button disabled={savingAction} onClick={() => changeSelectedStatus('ACTIVE')} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Reativar</button><button disabled={savingAction} onClick={() => changeSelectedStatus('SUSPENDED')} className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Suspender</button><button disabled={savingAction} onClick={() => changeSelectedStatus('CANCELLED')} className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Cancelar assinatura</button></div></div><div className="mt-4 border-t border-slate-200 pt-4"><button disabled={savingAction} onClick={deleteSelected} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50">Excluir assinante e seus dados</button></div></div></div>}
     </div>
   );
 }
