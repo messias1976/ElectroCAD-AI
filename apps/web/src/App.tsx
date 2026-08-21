@@ -22,11 +22,11 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-[100svh] min-w-0 max-w-full overflow-hidden bg-slate-100">
+    <div className="print-app-shell flex h-[100svh] min-w-0 max-w-full overflow-hidden bg-slate-100">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="print-app-content flex min-w-0 flex-1 flex-col">
         <Header onOpenMenu={() => setSidebarOpen(true)} />
-        <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-6">
+        <main className="print-app-main min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-6">
           <AppRoutes />
         </main>
       </div>
