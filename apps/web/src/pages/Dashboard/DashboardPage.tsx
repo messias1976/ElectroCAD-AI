@@ -8,6 +8,7 @@ type Subscriber = {
   id: string; username: string; email?: string | null; plan: string;
   subscriptionStatus: string; daysRemaining: number; trialEndsAt: string;
   requiresSubscription: boolean; hasActiveSubscription: boolean;
+  provider?: string | null; providerId?: string | null;
 };
 
 export default function DashboardPage() {
@@ -19,6 +20,17 @@ export default function DashboardPage() {
   const [access, setAccess] = useState<any>(null);
   const [clients, setClients] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [selected, setSelected] = useState<Subscriber | null>(null);
+  const [trialDays, setTrialDays] = useState('7');
+  const [savingAction, setSavingAction] = useState(false);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAdmin || authLoading) return;
+    apiFetch('/plans').then((data) => setPlans(Array.isArray(data) ? data : [])).catch(() => setPlans([]));
+  }, [isAdmin, authLoading]);
+
 
   useEffect(() => {
     fetchProfile().then((profile) => setUser(profile)).catch(() => undefined).finally(() => setAuthLoading(false));
@@ -76,9 +88,75 @@ export default function DashboardPage() {
     );
   }
 
+ 
+
+  const runAction = async (label: string, path: string, options: RequestInit) => {
+    setSavingAction(true);
+    setActionMessage(null);
+    try {
+      await apiFetch(path, options);
+      const refreshed = await apiFetch('/subscriptions/admin/overview');
+      const nextSubs = Array.isArray(refreshed) ? refreshed : [];
+      setSubs(nextSubs);
+      if (selected) {
+        const updated = nextSubs.find((item: Subscriber) => item.id === selected.id);
+        if (updated) setSelected(updated);
+      }
+      setActionMessage(`✓ ${label}`);
+    } catch (error) {
+      setActionMessage(`Erro: ${(error as Error).message}`);
+    } finally {
+      setSavingAction(false);
+    }
+  };
+
+  const extendSelectedTrial = async () => {
+    if (!selected) return;
+    const days = Number(trialDays);
+    if (!days || days < 1) {
+      setActionMessage('Informe pelo menos 1 dia.');
+      return;
+    }
+    await runAction(
+      `Período estendido em ${days} dia(s).`,
+      `/subscriptions/admin/users/${selected.id}/trial`,
+      { method: 'PATCH', body: JSON.stringify({ days }) },
+    );
+  };
+
+  const changeSelectedPlan = async (plan: string) => {
+    if (!selected) return;
+    await runAction(
+      `Plano alterado para ${plan}.`,
+      `/subscriptions/admin/users/${selected.id}/plan`,
+      { method: 'PATCH', body: JSON.stringify({ plan }) },
+    );
+  };
+
+  const changeSelectedStatus = async (status: string) => {
+    if (!selected) return;
+    await runAction(
+      `Status alterado para ${status}.`,
+      `/subscriptions/admin/users/${selected.id}/status`,
+      { method: 'PATCH', body: JSON.stringify({ status }) },
+    );
+  };
+
+  const deleteSelected = async () => {
+    if (!selected) return;
+    if (!window.confirm(`Excluir definitivamente o usuário ${selected.username}? Esta ação também remove os projetos, clientes e assinaturas dele.`)) return;
+    await runAction(
+      'Assinante excluído.',
+      `/subscriptions/admin/users/${selected.id}`,
+      { method: 'DELETE' },
+    );
+    setSelected(null);
+  };
+
   const active = subs.filter(s => s.hasActiveSubscription).length;
   const trial = subs.filter(s => !s.hasActiveSubscription && !s.requiresSubscription).length;
   const expired = subs.filter(s => s.requiresSubscription).length;
+  const suspended = subs.filter(s => s.subscriptionStatus === 'SUSPENDED').length;
   const remainingLabel = (trialEndsAt: string) => {
     const diff = Math.max(0, new Date(trialEndsAt).getTime() - now);
     if (diff <= 0) return '0 dias grátis';
@@ -90,24 +168,124 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      <div><h2 className="text-3xl font-bold text-slate-900">Painel administrativo SaaS</h2><p className="mt-2 text-sm text-slate-500">Acompanhe assinantes, testes gratuitos e conversão para planos pagos.</p></div>
-      <div className="grid gap-4 md:grid-cols-4">
+      <div>
+        <h2 className="text-3xl font-bold text-slate-900">Painel administrativo SaaS</h2>
+        <p className="mt-2 text-sm text-slate-500">Controle assinantes, planos, testes, acesso e pagamentos em um único lugar.</p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {[
           ['Assinantes', subs.length, Users],
           ['Ativos', active, CreditCard],
           ['Em teste', trial, Clock3],
-          ['Aguardando assinatura', expired, AlertTriangle],
-        ].map(([label, value, Icon]: any) => <div key={label} className="rounded-2xl border bg-white p-5 shadow-sm"><Icon size={20} className="text-blue-600"/><p className="mt-3 text-sm text-slate-500">{label}</p><b className="text-2xl">{value}</b></div>)}
+          ['Expirados', expired, AlertTriangle],
+          ['Suspensos', suspended, AlertTriangle],
+        ].map(([label, value, Icon]: any) => (
+          <div key={label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <Icon size={20} className="text-blue-600" />
+            <p className="mt-3 text-sm text-slate-500">{label}</p>
+            <b className="text-2xl text-slate-900">{value}</b>
+          </div>
+        ))}
       </div>
-      <section className="overflow-hidden rounded-3xl border bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b p-5"><div><h3 className="text-xl font-bold">Assinantes</h3><p className="text-sm text-slate-500">Dias de teste, plano e situação de cada conta.</p></div><Link to="/subscriptions" className="rounded-xl border px-4 py-2 text-sm font-semibold">Gerenciar planos</Link></div>
-        <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr><th className="p-4">Usuário</th><th className="p-4">Plano</th><th className="p-4">Status</th><th className="p-4">Teste</th><th className="p-4">Ação</th></tr></thead><tbody>
-          {subs.map(s => <tr key={s.id} className="border-t"><td className="p-4"><b>{s.username}</b><div className="text-xs text-slate-500">{s.email}</div></td><td className="p-4">{s.plan}</td><td className="p-4">{s.hasActiveSubscription ? <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">Ativo</span> : s.requiresSubscription ? <span className="rounded-full bg-red-100 px-3 py-1 text-red-700">Assinatura necessária</span> : <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-700">Teste grátis</span>}</td><td className="p-4">{s.hasActiveSubscription ? <span className="text-slate-400">—</span> : s.requiresSubscription ? <span className="font-semibold text-red-600">0 dias grátis</span> : <div><b className="text-amber-700">{remainingLabel(s.trialEndsAt)}</b><div className="text-xs text-slate-500">até {new Date(s.trialEndsAt).toLocaleDateString('pt-BR')}</div></div>}</td><td className="p-4">{s.requiresSubscription && s.email ? (
-  <a href={`mailto:${s.email}?subject=${encodeURIComponent('Assinatura do ElectroCAD-AI')}&body=${encodeURIComponent('Olá! Seu período gratuito do ElectroCAD-AI terminou. Acesse a plataforma para escolher seu plano e realizar a assinatura.')}`} className="inline-block rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white">Enviar assinatura</a>
-) : s.requiresSubscription ? 'E-mail não informado' : 'Acompanhando'}</td></tr>)}
-          {!subs.length && <tr><td colSpan={5} className="p-8 text-center text-slate-500">Nenhum assinante encontrado.</td></tr>}
-        </tbody></table></div>
+
+      {actionMessage && (
+        <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${actionMessage.startsWith('Erro') ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
+          {actionMessage}
+        </div>
+      )}
+
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-5">
+          <div>
+            <h3 className="text-xl font-bold text-slate-900">Gestão de assinantes</h3>
+            <p className="text-sm text-slate-500">Selecione um cliente para controlar plano, trial, acesso e assinatura.</p>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] text-left text-sm">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="p-4">Usuário</th>
+                <th className="p-4">Plano</th>
+                <th className="p-4">Status</th>
+                <th className="p-4">Trial</th>
+                <th className="p-4">Pagamento</th>
+                <th className="p-4">Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subs.map((s) => (
+                <tr key={s.id} className="border-t border-slate-100">
+                  <td className="p-4"><b>{s.username}</b><div className="text-xs text-slate-500">{s.email || 'Sem e-mail'}</div></td>
+                  <td className="p-4 font-medium">{s.plan}</td>
+                  <td className="p-4">
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${s.subscriptionStatus === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : s.subscriptionStatus === 'SUSPENDED' ? 'bg-orange-100 text-orange-700' : s.requiresSubscription ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {s.subscriptionStatus === 'ACTIVE' ? 'Ativo' : s.subscriptionStatus === 'SUSPENDED' ? 'Suspenso' : s.requiresSubscription ? 'Expirado' : 'Teste grátis'}
+                    </span>
+                  </td>
+                  <td className="p-4">{s.hasActiveSubscription ? '—' : <div><b>{remainingLabel(s.trialEndsAt)}</b><div className="text-xs text-slate-500">até {new Date(s.trialEndsAt).toLocaleDateString('pt-BR')}</div></div>}</td>
+                  <td className="p-4"><div>{s.provider || '—'}</div><div className="text-xs text-slate-500">{s.providerId || 'Sem ID Asaas'}</div></td>
+                  <td className="p-4"><button type="button" onClick={() => { setSelected(s); setActionMessage(null); }} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">Gerenciar</button></td>
+                </tr>
+              ))}
+              {!subs.length && <tr><td colSpan={6} className="p-8 text-center text-slate-500">Nenhum assinante encontrado.</td></tr>}
+            </tbody>
+          </table>
+        </div>
       </section>
+
+      {selected && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/50 p-3 sm:items-center sm:p-6">
+          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-7">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Gestão do assinante</p>
+                <h3 className="mt-1 text-2xl font-bold text-slate-900">{selected.username}</h3>
+                <p className="text-sm text-slate-500">{selected.email || 'Sem e-mail'}</p>
+              </div>
+              <button type="button" onClick={() => setSelected(null)} className="rounded-lg border px-3 py-2 text-sm">Fechar</button>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Plano</p><b>{selected.plan}</b></div>
+              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Status</p><b>{selected.subscriptionStatus}</b></div>
+              <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Asaas</p><b className="break-all text-xs">{selected.providerId || 'Não vinculado'}</b></div>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <h4 className="font-semibold">Estender período gratuito</h4>
+                <p className="mt-1 text-xs text-slate-500">Adiciona dias ao período atual, inclusive após expirar.</p>
+                <div className="mt-3 flex gap-2"><input type="number" min="1" value={trialDays} onChange={(e) => setTrialDays(e.target.value)} className="w-24 rounded-lg border px-3 py-2" /><button disabled={savingAction} onClick={extendSelectedTrial} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Adicionar dias</button></div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <h4 className="font-semibold">Alterar plano</h4>
+                <p className="mt-1 text-xs text-slate-500">Atualiza o plano associado à conta.</p>
+                <select disabled={savingAction} value={selected.plan === 'Teste gratuito' ? '' : selected.plan} onChange={(e) => e.target.value && changeSelectedPlan(e.target.value)} className="mt-3 w-full rounded-lg border px-3 py-2">
+                  <option value="">Selecione um plano</option>
+                  {plans.map((plan) => <option key={plan.id} value={plan.name}>{plan.name} — {plan.price}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-slate-200 p-4">
+              <h4 className="font-semibold">Controle de acesso e assinatura</h4>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                <button disabled={savingAction} onClick={() => changeSelectedStatus('ACTIVE')} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Reativar</button>
+                <button disabled={savingAction} onClick={() => changeSelectedStatus('SUSPENDED')} className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Suspender</button>
+                <button disabled={savingAction} onClick={() => changeSelectedStatus('CANCELLED')} className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Cancelar assinatura</button>
+              </div>
+              <p className="mt-3 text-xs text-slate-500">Status atual: {selected.subscriptionStatus}. O identificador Asaas aparece acima quando a assinatura/cobrança estiver vinculada.</p>
+            </div>
+
+            <div className="mt-4 border-t border-slate-200 pt-4">
+              <button disabled={savingAction} onClick={deleteSelected} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50">Excluir assinante e seus dados</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

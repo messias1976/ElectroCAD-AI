@@ -1,66 +1,79 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { AdminGuard } from '../auth/guards/roles.guard';
+import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { SubscriptionsService } from './subscriptions.service';
 import { AsaasService } from '../payments/asaas.service';
+import { AdminGuard } from '../auth/guards/roles.guard';
 
 @Controller('subscriptions')
 @UseGuards(AuthGuard('jwt'))
 export class SubscriptionsController {
-  constructor(private readonly subs: SubscriptionsService, private readonly asaas: AsaasService) {}
+  constructor(private subs: SubscriptionsService, private asaas: AsaasService) {}
 
   @Get('me')
-  me(@Req() req: { user: { userId: string } }) { return this.subs.getMyAccess(req.user.userId); }
-
-  @Post('checkout')
-  async checkout(@Req() req: { user: { userId: string } }, @Body() body: { plan?: string; billingType?: string }) {
-    const plan = await this.subs.getPlan(body.plan ?? '');
-    const user = await this.subs.getUserForCheckout(req.user.userId);
-    if (!user.email) throw new BadRequestException('Cadastre um email antes de solicitar uma assinatura.');
-    const customerId = user.asaasCustomerId ?? (await this.asaas.createCustomer(user.username, user.email)).id;
-    if (!user.asaasCustomerId) await this.subs.saveAsaasCustomerId(user.id, customerId);
-    const value = Number(plan.price.replace(/[^0-9,]/g, '').replace(',', '.'));
-    if (!Number.isFinite(value) || value <= 0) throw new BadRequestException('O valor do plano é inválido.');
-    const asaasSubscription = await this.asaas.createSubscription(customerId, body.billingType ?? 'BOLETO', value, `Assinatura ${plan.name}`);
-    const subscription = await this.subs.createPendingAsaasSubscription(user.id, plan.name, asaasSubscription.id);
-    return { subscription, asaasSubscriptionId: asaasSubscription.id };
+  async me(@Req() req: any) {
+    return this.subs.getMyAccess(req.user.userId);
   }
 
   @UseGuards(AdminGuard)
   @Get('admin/overview')
-  adminOverview() { return this.subs.getAdminOverview(); }
-
-  @UseGuards(AdminGuard)
-  @Get('admin/:userId')
-  adminSubscriber(@Param('userId') userId: string) { return this.subs.getAdminSubscriber(userId); }
-
-  @UseGuards(AdminGuard)
-  @Post('admin/:userId/trial')
-  extendTrial(@Param('userId') userId: string, @Body() body: { days?: number }) { return this.subs.extendTrial(userId, Number(body.days)); }
-
-  @UseGuards(AdminGuard)
-  @Put('admin/:userId/plan')
-  changePlan(@Param('userId') userId: string, @Body() body: { plan?: string }) { return this.subs.changePlan(userId, body.plan ?? ''); }
-
-  @UseGuards(AdminGuard)
-  @Post('admin/:userId/cancel')
-  async cancel(@Param('userId') userId: string) {
-    const subscriber = await this.subs.getAdminSubscriber(userId);
-    if (subscriber.provider === 'ASAAS' && subscriber.asaasSubscriptionId) {
-      await this.asaas.cancelSubscription(subscriber.asaasSubscriptionId);
-    }
-    return this.subs.cancel(userId);
+  async adminOverview() {
+    return this.subs.getAdminOverview();
   }
 
   @UseGuards(AdminGuard)
-  @Post('admin/:userId/suspend')
-  suspend(@Param('userId') userId: string) { return this.subs.setAccessStatus(userId, 'SUSPENDED'); }
+  @Patch('admin/users/:userId/trial')
+  async extendTrial(@Param('userId') userId: string, @Body() body: { days: number }) {
+    return this.subs.extendTrial(userId, Number(body?.days ?? 0));
+  }
 
   @UseGuards(AdminGuard)
-  @Post('admin/:userId/reactivate')
-  reactivate(@Param('userId') userId: string) { return this.subs.setAccessStatus(userId, 'ACTIVE'); }
+  @Patch('admin/users/:userId/plan')
+  async changePlan(@Param('userId') userId: string, @Body() body: { plan: string }) {
+    return this.subs.changePlan(userId, String(body?.plan ?? ''));
+  }
 
   @UseGuards(AdminGuard)
-  @Delete('admin/:userId')
-  delete(@Param('userId') userId: string) { return this.subs.deleteSubscriber(userId); }
+  @Patch('admin/users/:userId/status')
+  async changeStatus(@Param('userId') userId: string, @Body() body: { status: string }) {
+    return this.subs.changeStatus(userId, String(body?.status ?? ''));
+  }
+
+  @UseGuards(AdminGuard)
+  @Post('admin/users/:userId/cancel')
+  async cancel(@Param('userId') userId: string) {
+    return this.subs.changeStatus(userId, 'CANCELLED');
+  }
+
+  @UseGuards(AdminGuard)
+  @Delete('admin/users/:userId')
+  async remove(@Param('userId') userId: string) {
+    return this.subs.deleteUser(userId);
+  }
+
+  @UseGuards(AdminGuard)
+  @Post()
+  async create(@Body() dto: CreateSubscriptionDto) {
+    const provider = dto.provider || 'ASAAS';
+    const sub = await this.subs.create(dto.userId, dto.plan, provider);
+    if (provider === 'ASAAS' && dto.value) {
+      const charge = await this.asaas.createCharge({
+        customerId: dto.userId,
+        billingType: dto.billingType || 'BOLETO',
+        dueDate: dto.dueDate || new Date().toISOString().slice(0, 10),
+        value: dto.value,
+        description: `Assinatura ${dto.plan}`,
+      });
+      const pid = charge?.id || charge?.paymentId || charge?.billingId || '';
+      if (pid) await this.subs.updateProviderIdById(sub.id, pid);
+      return { subscription: sub, charge };
+    }
+    return { subscription: sub };
+  }
+
+  @UseGuards(AdminGuard)
+  @Get(':id')
+  async get(@Param('id') id: string) {
+    return this.subs.findById(id);
+  }
 }

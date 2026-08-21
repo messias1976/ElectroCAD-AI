@@ -2,10 +2,9 @@ import { Body, Controller, Get, Post, Put, Delete, Req, UseGuards } from '@nestj
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../auth/guards/roles.guard';
 import { AiService, AiChatDto } from './ai.service';
-import { SubscriberAccessGuard } from '../subscriptions/guards/subscriber-access.guard';
 
 @Controller('ai')
-@UseGuards(AuthGuard('jwt'), SubscriberAccessGuard)
+@UseGuards(AuthGuard('jwt'))
 export class AiController {
   constructor(private readonly aiService: AiService) {}
 
