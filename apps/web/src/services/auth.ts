@@ -5,6 +5,9 @@ export type CurrentUser = {
   username: string;
   email?: string | null;
   role: 'ADMIN' | 'SUBSCRIBER';
+  companyName?: string | null;
+  phone?: string | null;
+  whatsapp?: string | null;
 };
 
 const USER_KEY = 'electrocad-user';
