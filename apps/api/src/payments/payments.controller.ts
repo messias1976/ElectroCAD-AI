@@ -1,4 +1,5 @@
-import { Body, Controller, Headers, Post } from '@nestjs/common';
+import { Body, Controller, Headers, Post, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AsaasService } from './asaas.service';
 import { CreateChargeDto } from './create-charge.dto';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
@@ -8,25 +9,21 @@ export class PaymentsController {
   constructor(
     private asaas: AsaasService,
     private subs: SubscriptionsService,
+    private config: ConfigService,
   ) {}
 
   @Post('charge')
   async createCharge(@Body() dto: CreateChargeDto) {
-    return await this.asaas.createCharge(dto);
+    return this.asaas.createCharge(dto);
   }
 
   @Post('webhook')
-  async webhook(@Body() body: any, @Headers() headers: any) {
-    // Checagem simples de segredo se configurado
-    const secret = process.env.ASAAS_WEBHOOK_SECRET;
-    const incoming =
-      headers['x-asaas-signature'] ||
-      headers['x-asaas-signature'.toLowerCase()];
-    if (secret && incoming && incoming !== secret) {
-      return { ok: false };
+  async webhook(@Body() body: any, @Headers() headers: Record<string, string | undefined>) {
+    const secret = this.config.get<string>('ASAAS_WEBHOOK_SECRET');
+    const incoming = headers['asaas-access-token'];
+    if (secret && incoming !== secret) {
+      throw new UnauthorizedException('Webhook Asaas não autorizado.');
     }
-    // Delegar processamento para SubscriptionsService
-    await this.subs.handleAsaasWebhook(body);
-    return { ok: true };
+    return this.subs.handleAsaasWebhook(body);
   }
 }
