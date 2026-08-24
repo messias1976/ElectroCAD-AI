@@ -9,6 +9,7 @@ const DashboardPage = lazy(() => import('../pages/Dashboard/DashboardPage'));
 const ProjectsPage = lazy(() => import('../pages/Projects/ProjectsPage'));
 const AutoDesignerPage = lazy(() => import('../pages/Projects/AutoDesignerPage'));
 const PlantDesignerPage = lazy(() => import('../pages/Projects/PlantDesignerProfessionalPage'));
+const DimensioningPage = lazy(() => import('../pages/Projects/DimensioningPage'));
 const ClientsPage = lazy(() => import('../pages/Clients/ClientsPage'));
 const SubscriptionsPage = lazy(() => import('../pages/Subscriptions/SubscriptionsPage'));
 const MetricsPage = lazy(() => import('../pages/Metrics/MetricsPage'));
@@ -25,6 +26,7 @@ export default function AppRoutes() { return <RouteErrorBoundary><Suspense fallb
   <Route path="/planta" element={<ProtectedRoute><SubscriberAccessRoute><PlantDesignerPage /></SubscriberAccessRoute></ProtectedRoute>} />
   <Route path="/planta-eletrica" element={<ProtectedRoute><SubscriberAccessRoute><PlantDesignerPage /></SubscriberAccessRoute></ProtectedRoute>} />
   <Route path="/projetista" element={<ProtectedRoute><SubscriberAccessRoute><AutoDesignerPage /></SubscriberAccessRoute></ProtectedRoute>} />
+  <Route path="/dimensionamento" element={<ProtectedRoute><SubscriberAccessRoute><DimensioningPage /></SubscriberAccessRoute></ProtectedRoute>} />
   <Route path="/projects" element={<ProtectedRoute><SubscriberAccessRoute><ProjectsPage /></SubscriberAccessRoute></ProtectedRoute>} />
   <Route path="/clients" element={<ProtectedRoute><SubscriberAccessRoute><ClientsPage /></SubscriberAccessRoute></ProtectedRoute>} />
   <Route path="/professor" element={<ProtectedRoute><SubscriberAccessRoute><ProfessorPage /></SubscriberAccessRoute></ProtectedRoute>} />
