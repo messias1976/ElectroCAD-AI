@@ -1,13 +1,15 @@
 import { NavLink } from 'react-router-dom';
-import { House, CreditCard, Users, TrendingUp, CircuitBoard, PenTool, Bot, Settings, FolderKanban, X } from 'lucide-react';
+import { House, CreditCard, Users, TrendingUp, CircuitBoard, PenTool, Bot, Settings, FolderKanban, Calculator, UserCircle, X } from 'lucide-react';
 import { getStoredUser } from '../../services/auth';
 
 const common = [
   { label: 'Dashboard', icon: House, path: '/dashboard' },
+  { label: 'Meu perfil', icon: UserCircle, path: '/perfil' },
   { label: 'Meus clientes', icon: Users, path: '/clients' },
   { label: 'Meus projetos', icon: FolderKanban, path: '/projects' },
   { label: 'Planta elétrica', icon: PenTool, path: '/planta' },
   { label: 'Projetista', icon: CircuitBoard, path: '/projetista' },
+  { label: 'Dimensionamento e orçamento', icon: Calculator, path: '/dimensionamento' },
   { label: 'Professor IA', icon: Bot, path: '/professor' },
 ];
 
