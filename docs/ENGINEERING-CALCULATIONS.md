@@ -96,7 +96,7 @@ Para cada circuito, o sistema deve apresentar:
 
 ## Referência normativa
 
-A implementação utiliza ABNT NBR 5410:2004 como referência técnica de pré-dimensionamento. A ABNT mantém capacitação específica para instalações elétricas de baixa tensão baseada na NBR 5410; a versão normativa aplicável deve ser conferida antes de qualquer projeto executivo. citeturn0search0
+A implementação utiliza ABNT NBR 5410:2004 como referência técnica de pré-dimensionamento. A versão normativa aplicável deve ser conferida antes de qualquer projeto executivo e os parâmetros reais da instalação devem ser validados por profissional habilitado.
 
 ## Limitações atuais
 
