@@ -49,18 +49,20 @@ export type DimensioningInput = {
 
 const BREAKERS = [6, 10, 13, 16, 20, 25, 32, 40, 50, 63, 80, 100];
 const SECTIONS = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50];
-// Reference values for Cu/PVC 70 °C, method B1, 30 °C. They are used only as a calculation baseline.
+// Baseline values for Cu/PVC 70 °C, method B1, 30 °C. They are only a pre-dimensioning reference.
 const B1_2C = new Map<number, number>([[1.5, 17.5], [2.5, 24], [4, 32], [6, 41], [10, 57], [16, 76], [25, 101], [35, 125], [50, 151]]);
 const RESISTANCE_OHM_M_20C = new Map<number, number>([[1.5, 0.0121], [2.5, 0.00741], [4, 0.00461], [6, 0.00308], [10, 0.00183], [16, 0.00115], [25, 0.000727], [35, 0.000524], [50, 0.000387]]);
 
 function round(value: number, digits = 2) { const p = 10 ** digits; return Math.round(value * p) / p; }
 function positive(value: unknown, fallback = 0) { const n = Number(value); return Number.isFinite(n) ? Math.max(0, n) : fallback; }
-function nextBreaker(ib: number) { return BREAKERS.find(v => v >= ib) ?? null; }
-function minimumSectionForType(type: string) {
-  const normalized = type.toLowerCase();
-  if (normalized.includes('luz') || normalized.includes('ilum')) return 1.5;
-  if (normalized.includes('tug') || normalized.includes('tomada')) return 2.5;
-  return 1.5;
+function isLighting(type: string) { const n = type.toLowerCase(); return n.includes('luz') || n.includes('ilum'); }
+function isTug(type: string) { const n = type.toLowerCase(); return n.includes('tug') || n.includes('tomada'); }
+function isMotorType(type: string) { return type.toLowerCase().includes('motor'); }
+function minimumSectionForType(type: string) { if (isLighting(type)) return 1.5; return isTug(type) ? 2.5 : 2.5; }
+function nextBreakerForCircuit(current: number, type: string) {
+  const minimum = isLighting(type) ? 10 : isTug(type) ? 16 : 6;
+  const target = Math.max(current * 1.25, minimum);
+  return BREAKERS.find(v => v >= target) ?? null;
 }
 function nextSection(ib: number, breaker: number, minSection = 1.5, correction = 1) {
   for (const section of SECTIONS) {
@@ -80,7 +82,7 @@ function motorNominalCurrent(motor: MotorInput) {
 }
 
 export function calculateCircuit(circuit: CircuitInput, defaults?: DimensioningInput['criteria']) {
-  const isMotor = Boolean(circuit.motor) || circuit.type.toLowerCase().includes('motor');
+  const isMotor = Boolean(circuit.motor) || isMotorType(circuit.type);
   const pf = circuit.motor?.power_factor ?? circuit.power_factor ?? defaults?.power_factor_assumed ?? (isMotor ? 0.85 : 1);
   const totalPower = circuit.motor
     ? positive(circuit.motor.power_kW) * 1000
@@ -90,7 +92,7 @@ export function calculateCircuit(circuit: CircuitInput, defaults?: DimensioningI
   const ib = motorIb ?? totalPower / Math.max(1, voltage * Math.max(0.8, pf));
   const serviceFactor = circuit.motor?.service_factor && circuit.motor.service_factor > 1 ? circuit.motor.service_factor : 1;
   const designCurrent = ib * serviceFactor;
-  const breaker = circuit.proposed_breaker_A ?? nextBreaker(designCurrent);
+  const breaker = circuit.proposed_breaker_A ?? nextBreakerForCircuit(designCurrent, circuit.type);
   const correction = Math.max(0.1, (defaults?.temperature_correction_factor ?? 1) * (defaults?.grouping_correction_factor ?? 1));
   const minSection = minimumSectionForType(circuit.type);
   const section = circuit.proposed_conductor_mm2 ?? (breaker ? nextSection(designCurrent, breaker, minSection, correction) : null);
@@ -122,9 +124,9 @@ export function calculateCircuit(circuit: CircuitInput, defaults?: DimensioningI
   if (dvPercent != null && dvPercent > limit) alerts.push(`Queda de tensão de ${round(dvPercent)}% excede o limite informado de ${limit}%.`);
   if (isMotor && startDvPercent != null && startDvPercent > 10) alerts.push(`Queda estimada na partida de ${round(startDvPercent)}% excede 10%; avaliar método de partida, seção e impedâncias reais.`);
   if (isMotor && positive(circuit.motor?.power_kW) > 3.7) alerts.push('Motor acima de 3,7 kW (5 CV): verificar exigências da distribuidora e método de partida antes do projeto executivo.');
-  if (defaults?.temperature_correction_factor == null && (defaults?.installation_method || '').includes('B1')) alerts.push('Fator de correção de temperatura não informado; foi adotado 1,0 (condição de referência) para o pré-dimensionamento.');
+  if (defaults?.temperature_correction_factor == null && (defaults?.installation_method || '').includes('B1')) alerts.push('Fator de correção de temperatura não informado; foi adotado 1,0 para o pré-dimensionamento.');
   if (defaults?.grouping_correction_factor == null && (defaults?.installation_method || '').includes('B1')) alerts.push('Fator de agrupamento não informado; foi adotado 1,0. Confirmar número de circuitos agrupados.');
-  const breakerCurve = isMotor ? 'C/D a confirmar' : circuit.type.toLowerCase().includes('luz') ? 'B' : 'B/C a confirmar';
+  const breakerCurve = isMotor ? 'C/D a confirmar' : isLighting(circuit.type) ? 'B' : 'B/C a confirmar';
   return {
     id: circuit.id, name: circuit.name, type: circuit.type, totalPower_W: round(totalPower), voltage_V: voltage, powerFactor: pf,
     ib_A: round(ib), serviceFactor, designCurrent_A: round(designCurrent), breaker_A: breaker, breakerCurve,
@@ -139,26 +141,33 @@ export function calculateCircuit(circuit: CircuitInput, defaults?: DimensioningI
 
 export function calculateDimensioning(input: DimensioningInput) {
   const circuits = input.circuits.map(c => calculateCircuit(c, input.criteria));
+  // For mixed 127/220 V projects, summing circuit currents is a conservative project indicator,
+  // not a substitute for the demand/balance calculation of the supply feeder.
   const totalPower_W = circuits.reduce((s, c) => s + c.totalPower_W, 0);
-  const maxVoltage = circuits.reduce((s, c) => Math.max(s, c.voltage_V), 0) || 127;
-  const totalCurrent_A = totalPower_W / Math.max(1, maxVoltage * Math.max(0.8, input.criteria?.power_factor_assumed ?? 1));
+  const totalCurrent_A = circuits.reduce((s, c) => s + c.designCurrent_A, 0);
   const alerts = circuits.flatMap(c => c.alerts);
   if (!input.main_breaker) alerts.push('Disjuntor geral não informado; calcular após confirmação da demanda e padrão de entrada.');
   if (input.supply.grounding_type !== 'TN-C-S') alerts.push(`Aterramento informado como ${input.supply.grounding_type}; confirmar esquema real no local.`);
   if (input.requirements?.rccbs?.required) alerts.push(`DR de alta sensibilidade ${input.requirements.rccbs.sensitivity_mA ?? 30} mA solicitado; confirmar circuitos protegidos, seletividade e instalação no quadro.`);
-  alerts.push('Corrente de curto-circuito disponível, seletividade, agrupamento e fatores térmicos precisam ser confirmados antes do projeto executivo.');
+  alerts.push('Corrente de curto-circuito disponível, seletividade, agrupamento, balanceamento de fases e fatores térmicos precisam ser confirmados antes do projeto executivo.');
   return {
-    diagnosis: alerts.length === 1 ? 'Pré-dimensionamento com ressalvas.' : 'Pré-dimensionamento concluído com verificações pendentes.',
+    diagnosis: 'Pré-dimensionamento concluído com verificações pendentes.',
     totalPower_W: round(totalPower_W), totalPower_kW: round(totalPower_W / 1000), totalCurrent_A: round(totalCurrent_A),
     circuits, alerts: [...new Set(alerts)],
     rccb: input.requirements?.rccbs?.required ? { required: true, sensitivity_mA: input.requirements.rccbs.sensitivity_mA ?? 30 } : { required: false, sensitivity_mA: null },
-    materialSchedule: calculateMaterialSchedule(input.circuits, circuits, input.requirements?.rccbs?.required ?? false),
+    materialSchedule: calculateMaterialSchedule(input.circuits, circuits, input.requirements?.rccbs?.required ?? false, input.main_breaker ?? null, input.supply),
     disclaimer: 'Pré-dimensionamento. Validar por profissional habilitado e pelas condições reais da instalação conforme ABNT NBR 5410 e demais normas aplicáveis.',
   };
 }
 
 export type MaterialItem = { category: string; item: string; specification: string; quantity: number; unit: string; basis: string };
-export function calculateMaterialSchedule(inputs: CircuitInput[], results: ReturnType<typeof calculateCircuit>[], rccbRequired = false): MaterialItem[] {
+export function calculateMaterialSchedule(
+  inputs: CircuitInput[],
+  results: ReturnType<typeof calculateCircuit>[],
+  rccbRequired = false,
+  mainBreaker: number | null = null,
+  supply?: DimensioningInput['supply'],
+): MaterialItem[] {
   const items: MaterialItem[] = [];
   const add = (category: string, item: string, specification: string, quantity: number, unit: string, basis: string) => {
     if (quantity > 0) items.push({ category, item, specification, quantity: round(quantity), unit, basis });
@@ -169,29 +178,35 @@ export function calculateMaterialSchedule(inputs: CircuitInput[], results: Retur
   const peBySection = new Map<number, number>();
   inputs.forEach((circuit, index) => {
     const result = results[index];
-    if (!result || !result.conductor_mm2 || circuit.route_length_m <= 0) return;
-    const length = circuit.route_length_m * 1.1;
-    totalConduit += length;
-    const section = result.conductor_mm2;
-    const isThreePhase = circuit.motor?.phases === 3;
-    const phaseConductors = isThreePhase ? 3 : 1;
-    const neutralConductors = isThreePhase ? 1 : (result.voltage_V === 127 ? 1 : 0);
-    const phaseQty = length * phaseConductors;
-    phaseBySection.set(section, (phaseBySection.get(section) ?? 0) + phaseQty);
-    if (neutralConductors) { const q = length * neutralConductors; neutralBySection.set(section, (neutralBySection.get(section) ?? 0) + q); }
-    const peSection = section <= 16 ? section : section <= 35 ? 16 : section / 2;
-    peBySection.set(peSection, (peBySection.get(peSection) ?? 0) + length);
+    if (!result) return;
+    const length = Math.max(0, positive(circuit.route_length_m)) * 1.1;
+    if (result.conductor_mm2 && length > 0) {
+      totalConduit += length;
+      const section = result.conductor_mm2;
+      const isThreePhase = circuit.motor?.phases === 3;
+      const phaseConductors = isThreePhase ? 3 : 1;
+      const neutralConductors = isThreePhase ? 1 : (result.voltage_V === 127 ? 1 : 0);
+      phaseBySection.set(section, (phaseBySection.get(section) ?? 0) + length * phaseConductors);
+      if (neutralConductors) neutralBySection.set(section, (neutralBySection.get(section) ?? 0) + length * neutralConductors);
+      const peSection = section <= 16 ? section : section <= 35 ? 16 : section / 2;
+      peBySection.set(peSection, (peBySection.get(peSection) ?? 0) + length);
+    }
     const pointQty = circuit.points.reduce((s, p) => s + positive(p.qty), 0);
-    add('Pontos', circuit.type.toLowerCase().includes('luz') ? 'Ponto de iluminação' : 'Ponto de tomada/equipamento', circuit.type, pointQty, 'un', `Quantidade de pontos do ${circuit.id}`);
-    add('Proteção', 'Disjuntor termomagnético', `${result.breaker_A ?? 'a definir'} A curva ${result.breakerCurve}`, 1, 'un', `${circuit.id}`);
+    add('Pontos', isLighting(circuit.type) ? 'Ponto de iluminação' : 'Ponto de tomada/equipamento', circuit.type, pointQty, 'un', `Quantidade informada do ${circuit.id}`);
+    add('Proteção', 'Disjuntor termomagnético', `${result.breaker_A ?? 'a definir'} A, curva ${result.breakerCurve}`, 1, 'un', `Proteção do ${circuit.id}`);
   });
-  phaseBySection.forEach((q, section) => add('Condutores', 'Condutor de fase', `Cobre ${section} mm², PVC 70 °C`, q, 'm', 'Comprimento de rota + 10% de reserva'));
-  neutralBySection.forEach((q, section) => add('Condutores', 'Condutor de neutro', `Cobre ${section} mm², PVC 70 °C`, q, 'm', 'Circuitos com neutro'));
-  peBySection.forEach((q, section) => add('Condutores', 'Condutor de proteção (PE)', `Cobre ${section} mm², verde/verde-amarelo`, q, 'm', 'Estimativa conforme seção de fase'));
-  add('Infraestrutura', 'Eletroduto', 'Diâmetro a dimensionar conforme ocupação e número de condutores', totalConduit, 'm', 'Rotas dos circuitos + 10% de reserva');
-  add('Proteção', 'DR alta sensibilidade', `${rccbRequired ? 30 : 'conforme projeto'} mA`, rccbRequired ? 1 : 0, 'un', 'Requisito informado para o projeto');
-  add('Quadro', 'Espaço para disjuntores', 'Módulos DIN; quantidade deve considerar disjuntores, DR e DPS', results.filter(r => r.breaker_A != null).length, 'módulos (mín.)', 'Confirmar largura real dos dispositivos');
-  add('Documentação', 'Identificação de circuitos', 'Etiquetas/identificação no quadro', results.length, 'un', 'Um por circuito');
+  phaseBySection.forEach((q, section) => add('Condutores', 'Condutor de fase', `Cobre ${section} mm², PVC 70 °C`, q, 'm', 'Rota dos circuitos + 10% de reserva'));
+  neutralBySection.forEach((q, section) => add('Condutores', 'Condutor de neutro', `Cobre ${section} mm², PVC 70 °C, azul-claro`, q, 'm', 'Circuitos em 127 V + 10% de reserva'));
+  peBySection.forEach((q, section) => add('Condutores', 'Condutor de proteção (PE)', `Cobre ${section} mm², verde/verde-amarelo`, q, 'm', 'Estimativa da seção do PE + 10% de reserva'));
+  add('Infraestrutura', 'Eletroduto', 'Diâmetro a dimensionar pela ocupação e número de condutores', totalConduit, 'm', 'Rotas dos circuitos + 10% de reserva');
+  add('Proteção', 'Disjuntor geral', `${mainBreaker ?? 'a definir'} A, número de polos conforme sistema de alimentação`, mainBreaker ? 1 : 0, 'un', 'Proteção geral informada');
+  add('Proteção', 'DR alta sensibilidade', `${rccbRequired ? 30 : 'a definir'} mA, polos conforme sistema`, rccbRequired ? 1 : 0, 'un', 'Requisito informado para o projeto');
+  const supplyLabel = supply?.voltage_system || 'sistema informado';
+  add('Proteção', 'DPS Classe II', `Tensão e esquema de ligação compatíveis com ${supplyLabel}`, 1, 'conjunto', 'Proteção contra surtos — especificar após análise do sistema');
+  add('Quadro', 'Quadro de distribuição', 'Mínimo estimado: 12 módulos DIN, ajustar após definição dos dispositivos e reserva', 1, 'un', 'Estimativa para acomodar circuitos + proteção geral + DR + DPS + reserva');
+  add('Quadro', 'Barramento de neutro', 'Barramento DIN compatível com o quadro', 1, 'un', 'Conforme número de circuitos');
+  add('Quadro', 'Barramento de terra (PE)', 'Barramento DIN compatível com o quadro', 1, 'un', 'Conforme número de circuitos');
+  add('Quadro', 'Identificação de circuitos', 'Etiquetas/identificação no quadro', results.length, 'un', 'Uma identificação por circuito');
   return items;
 }
 
@@ -208,6 +223,6 @@ export function estimateServiceBudget(input: BudgetInput) {
   return {
     suggested: round(suggested), rangeMin: round(suggested * 0.85), rangeMax: round(suggested * 1.25),
     breakdown: { base, room, point, circuit, plant, dimensioning, unifilar },
-    note: 'Orçamento comercial referente somente à mão de obra/serviço técnico. Não inclui materiais, execução, compra em loja, ART/RRT ou taxas.',
+    note: 'Orçamento comercial referente somente à mão de obra/serviço técnico. Não inclui materiais, compra em loja, execução física, ART/RRT ou taxas.',
   };
 }
