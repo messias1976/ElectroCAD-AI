@@ -25,19 +25,25 @@ O motor atual é de **pré-dimensionamento** de instalações elétricas de baix
 
 `Ib = P_total / (V × fp)`
 
-Para o pré-dimensionamento, o motor usa a fórmula monofásica ou trifásica com rendimento e fator de potência.
+Para motores, a corrente nominal considera tensão, número de fases, rendimento e fator de potência.
 
 ### Proteção e condutor
 
-O motor atual seleciona preliminarmente o menor disjuntor padronizado que atenda à corrente de projeto e seleciona seção cuja capacidade de condução corrigida atenda à proteção e à corrente calculada.
+A seleção é preliminar e usa valores padronizados de disjuntores. Para iluminação, o algoritmo considera 10 A como piso de seleção; para TUG, considera 16 A como piso de seleção, evitando resultados incoerentes como um circuito de tomadas protegido por 6 A apenas porque a corrente calculada é baixa. Para TUE e motores, o valor é calculado a partir da corrente de projeto e dos dados disponíveis.
+
+A seção mínima de referência é 1,5 mm² para iluminação e 2,5 mm² para TUG/TUE. A capacidade de condução corrigida deve atender à corrente de projeto e à proteção selecionada.
 
 A base atual de referência usa cobre/PVC 70 °C, método B1, 30 °C e dois condutores carregados. Os fatores de temperatura e agrupamento podem ser informados explicitamente.
 
 ### Queda de tensão
 
-Para circuitos monofásicos, a rotina usa uma estimativa de ida e volta. Para circuitos trifásicos, usa a forma correspondente com `√3`.
+Para circuitos monofásicos, a rotina usa estimativa de ida e volta:
 
-O limite configurável padrão é 4% para circuitos terminais.
+`ΔV = 2 × L × I × R`
+
+Para circuitos trifásicos, utiliza a forma correspondente com `√3`.
+
+O limite configurável padrão é 4% para circuitos terminais. A resistência utilizada é uma referência de pré-dimensionamento e deve ser substituída/confirmada conforme seção, temperatura de operação, material e condições reais.
 
 ### Motores
 
@@ -53,30 +59,45 @@ O motor calcula:
 
 A análise de partida ainda precisa de impedância real da instalação, dados do fabricante e método de partida para projeto executivo.
 
-## DR, aterramento e segurança
+## DR, DPS, aterramento e segurança
 
 O resultado pode exigir DR de alta sensibilidade, com sensibilidade configurável. A aplicação real deve verificar os circuitos abrangidos, seletividade e esquema de aterramento.
 
+A lista preliminar também reserva um conjunto de DPS Classe II, mas a especificação definitiva depende do sistema de alimentação, esquema de ligação e análise do projeto.
+
 ## Materiais
 
-O sistema **não atribui preço aos materiais**. Ele retorna apenas:
+O sistema **não atribui preço aos materiais**. O preço não é calculado porque varia por loja, marca, região e fornecedor. O ElectroCAD retorna apenas:
 
 - item;
-- especificação;
+- especificação técnica;
 - quantidade estimada;
 - unidade;
 - base do cálculo.
 
+A lista inclui, conforme os dados disponíveis, pontos, disjuntores dos circuitos, disjuntor geral, DR, DPS, condutores de fase/neutro/PE, eletroduto, quadro de distribuição, barramentos e identificação dos circuitos.
+
 Comprimentos de condutores e eletrodutos recebem reserva de 10% apenas como estimativa de rota/corte e devem ser conferidos com a planta executiva.
 
-## Orçamento
+## Orçamento de serviço
 
-O orçamento comercial do sistema é exclusivamente de **mão de obra/serviço técnico**. Não inclui material, compra em loja, execução, ART/RRT ou taxas.
+O orçamento comercial do sistema é exclusivamente de **mão de obra/serviço técnico**. Não inclui preço de materiais, compra em loja, execução física, ART/RRT ou taxas.
+
+A composição pode considerar complexidade por ambiente, pontos, circuitos, planta e dimensionamento. O valor é uma sugestão comercial e deve ser ajustado pelo profissional conforme escopo, região e responsabilidade assumida.
+
+## Saída obrigatória
+
+Para cada circuito, o sistema deve apresentar:
+
+1. **Diagnóstico** — `✅ OK` ou `⚠️ Revisar`.
+2. **Cálculos/Justificativas** — potência, corrente, proteção, seção/Iz e queda de tensão.
+3. **Alertas** — dados ausentes, limites excedidos e verificações pendentes.
+4. **Próximos passos** — informações necessárias para evoluir para projeto executivo.
 
 ## Referência normativa
 
-A implementação utiliza ABNT NBR 5410:2004 como referência. Entre os pontos consultados estão a Tabela 36 para capacidade de condução e as regras de queda de tensão e motores. Antes de qualquer projeto executivo, deve ser verificada a edição normativa aplicável e as condições reais da instalação.
+A implementação utiliza ABNT NBR 5410:2004 como referência técnica de pré-dimensionamento. A ABNT mantém capacitação específica para instalações elétricas de baixa tensão baseada na NBR 5410; a versão normativa aplicável deve ser conferida antes de qualquer projeto executivo. citeturn0search0
 
 ## Limitações atuais
 
-Ainda não estão completos: banco integral de tabelas e fatores de correção, curto-circuito, seletividade, impedâncias/reatâncias completas, coordenação de proteção, DPS, barramentos e todos os critérios de projeto executivo.
+Ainda não estão completos: banco integral de tabelas e fatores de correção, curto-circuito, seletividade, impedâncias/reatâncias completas, coordenação de proteção, dimensionamento executivo completo de DPS/DR/barramentos e todos os critérios de projeto executivo.
