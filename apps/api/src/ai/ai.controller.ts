@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Post, Put, Delete, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../auth/guards/roles.guard';
-import { AiService, AiChatDto } from './ai.service';
+import { AiGenerateProjectDto, AiService, AiChatDto } from './ai.service';
 
 @Controller('ai')
 @UseGuards(AuthGuard('jwt'))
@@ -24,7 +24,10 @@ export class AiController {
   async clearConfig() { return this.aiService.clearConfig(); }
 
   @Post('chat')
-  async chat(@Req() req: any, @Body() body: AiChatDto) {
-    return this.aiService.chat(body, req.user.userId, req.user.role);
+  async chat(@Req() req: any, @Body() body: AiChatDto) { return this.aiService.chat(body, req.user.userId, req.user.role); }
+
+  @Post('generate-project')
+  async generateProject(@Req() req: any, @Body() body: AiGenerateProjectDto) {
+    return this.aiService.generateProject(body, req.user.userId, req.user.role);
   }
 }
