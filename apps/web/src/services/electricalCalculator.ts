@@ -182,7 +182,7 @@ export function calculateMaterialSchedule(inputs: CircuitInput[], results: Retur
     const peSection = section <= 16 ? section : section <= 35 ? 16 : section / 2;
     peBySection.set(peSection, (peBySection.get(peSection) ?? 0) + length);
     const pointQty = circuit.points.reduce((s, p) => s + positive(p.qty), 0);
-    add('Pontos', circuit.type.toLowerCase().includes('luz') ? 'Ponto de iluminação' : 'Ponto de tomada/equipamento', pointQty, 'un', `Quantidade de pontos do ${circuit.id}`);
+    add('Pontos', circuit.type.toLowerCase().includes('luz') ? 'Ponto de iluminação' : 'Ponto de tomada/equipamento', circuit.type, pointQty, 'un', `Quantidade de pontos do ${circuit.id}`);
     add('Proteção', 'Disjuntor termomagnético', `${result.breaker_A ?? 'a definir'} A curva ${result.breakerCurve}`, 1, 'un', `${circuit.id}`);
   });
   phaseBySection.forEach((q, section) => add('Condutores', 'Condutor de fase', `Cobre ${section} mm², PVC 70 °C`, q, 'm', 'Comprimento de rota + 10% de reserva'));
