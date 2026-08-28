@@ -50,4 +50,6 @@ A IA retorna um rascunho JSON com:
 
 O Professor ElectroCAD possui o botão **Gerar projeto completo**. O texto digitado pelo usuário é usado como solicitação; se o campo estiver vazio, a IA usa o projeto atual como contexto.
 
-O resultado aparece como rascunho estruturado para revisão. A próxima evolução é adicionar a ação explícita **Aplicar ao projeto**, com confirmação do usuário, para evitar sobrescrita acidental.
+O resultado aparece como rascunho estruturado para revisão. A interface agora possui **Aplicar ao projeto**, com confirmação explícita antes de substituir `projectData` do projeto atual.
+
+Depois de aplicar, o usuário deve executar o dimensionamento e revisar os alertas, dados faltantes e condições reais da instalação.
