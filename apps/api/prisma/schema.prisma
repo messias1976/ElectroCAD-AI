@@ -22,6 +22,10 @@ model User {
     trialStartedAt   DateTime       @default(now())
     trialDays        Int            @default(14)
     asaasCustomerId  String?        @unique
+    feedbackStatus   String         @default("NOT_CONTACTED")
+    feedbackNotes    String?
+    lastContactAt    DateTime?
+    interestedInPlan Boolean?
     subscriptions    Subscription[]
     projects         Project[]
     clients          Client[]
