@@ -38,24 +38,55 @@ function expandPoints(data: any, rooms: Room[]): Point[] {
   const source = Array.isArray(data?.points) ? data.points : [];
   const result: Point[] = [];
   source.forEach((p: any, index: number) => {
-    const qty = Math.max(1, Math.round(Number(p.qty) || 1));
     const roomId = numericId(p.roomId, rooms[0]?.id || 1);
     const room = rooms.find(r => r.id === roomId) || rooms[0];
-    const baseX = Number.isFinite(Number(p.x)) ? Number(p.x) : (room ? room.x + room.w / 2 : 100);
-    const baseY = Number.isFinite(Number(p.y)) ? Number(p.y) : (room ? room.y + room.h / 2 : 100);
     const kind = kindOf(p.kind || p.type);
+    const hasSavedPosition = Number.isFinite(Number(p.x)) && Number.isFinite(Number(p.y));
+    const qty = Math.max(1, Math.round(Number(p.qty) || 1));
+
+    // Pontos já salvos pelo editor são registros individuais. Nunca expandir,
+    // deslocar ou recalcular suas coordenadas: x/y são a fonte da verdade.
+    if (hasSavedPosition && (qty === 1 || String(p.sourceId || p.id || '').includes('#'))) {
+      const id = numericId(p.id ?? p.sourceId ?? index + 1, index + 1);
+      const prefix = kind === 'Luz' ? 'L' : kind === 'TUG' ? 'T' : 'E';
+      result.push({
+        id,
+        sourceId: String(p.sourceId || p.id || `p${index + 1}`),
+        roomId: room?.id || 1,
+        kind,
+        x: Number(p.x),
+        y: Number(p.y),
+        watts: Number(p.watts) || 100,
+        voltage: Number(p.voltage) === 220 ? 220 : 127,
+        label: String(p.label || `${prefix}${index + 1}`),
+        distance: Number(p.distance) || 10,
+        description: String(p.description || p.equipment || 'Ponto elétrico'),
+      });
+      return;
+    }
+
+    const baseX = hasSavedPosition ? Number(p.x) : (room ? room.x + room.w / 2 : 100);
+    const baseY = hasSavedPosition ? Number(p.y) : (room ? room.y + room.h / 2 : 100);
     for (let i = 0; i < qty; i++) {
       const angle = qty === 1 ? 0 : (Math.PI * 2 * i) / qty;
       const radius = qty === 1 ? 0 : Math.min(38, Math.max(20, Math.min(room?.w || 80, room?.h || 80) / 5));
       const id = numericId(`${p.sourceId || p.id || index}-${i + 1}`, index * 100 + i + 1);
       const sourceId = `${String(p.sourceId || p.id || `p${index + 1}`)}#${i + 1}`;
       const prefix = kind === 'Luz' ? 'L' : kind === 'TUG' ? 'T' : 'E';
-      result.push({ id, sourceId, roomId: room?.id || 1, kind, x: baseX + Math.cos(angle) * radius, y: baseY + Math.sin(angle) * radius, watts: Number(p.watts) || 100, voltage: Number(p.voltage) === 220 ? 220 : 127, label: qty > 1 ? `${prefix}${index + 1}.${i + 1}` : String(p.label || `${prefix}${index + 1}`), distance: Number(p.distance) || 10, description: String(p.description || p.equipment || 'Ponto elétrico') });
+      result.push({
+        id, sourceId, roomId: room?.id || 1, kind,
+        x: baseX + Math.cos(angle) * radius,
+        y: baseY + Math.sin(angle) * radius,
+        watts: Number(p.watts) || 100,
+        voltage: Number(p.voltage) === 220 ? 220 : 127,
+        label: qty > 1 ? `${prefix}${index + 1}.${i + 1}` : String(p.label || `${prefix}${index + 1}`),
+        distance: Number(p.distance) || 10,
+        description: String(p.description || p.equipment || 'Ponto elétrico'),
+      });
     }
   });
   return result;
 }
-
 function loadPlant(project: Project) {
   const plant = parse(project.plantData);
   const projectData = parse(project.projectData);
