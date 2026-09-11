@@ -42,6 +42,12 @@ export class SubscriptionsController {
   async cancel(@Param('userId') userId: string) { return this.subs.changeStatus(userId, 'CANCELLED'); }
 
   @UseGuards(AdminGuard)
+  @Patch('admin/users/:userId/feedback')
+  async updateFeedback(@Param('userId') userId: string, @Body() body: { feedbackStatus?: string; feedbackNotes?: string; interestedInPlan?: boolean | null; contacted?: boolean }) {
+    return this.subs.updateFeedback(userId, body || {});
+  }
+
+  @UseGuards(AdminGuard)
   @Delete('admin/users/:userId')
   async remove(@Param('userId') userId: string) { return this.subs.deleteUser(userId); }
 
