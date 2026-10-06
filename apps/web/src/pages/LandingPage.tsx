@@ -42,8 +42,8 @@ export default function LandingPage(){
   <main>
   {/* HERO — composição visual equivalente à referência */}
   <section id="inicio" className="relative min-h-[575px] overflow-hidden bg-[#061a33] pt-24 text-white sm:min-h-[610px]">
-   <img src={`${heroBg}${heroBg.includes("?") ? "&" : "?"}v=2`} onError={()=>heroBg!==fallbackHeroBg&&setHeroBg(fallbackHeroBg)} alt="" className="absolute inset-0 h-full w-full object-cover" loading="eager" fetchPriority="high"/>
-   <div className="absolute inset-0 bg-gradient-to-r from-[#061426]/10 via-transparent to-transparent"/>
+   <img src={heroBg} alt="" className="absolute inset-0 h-full w-full object-cover" loading="eager" fetchPriority="high"/>
+   <div className="absolute inset-0 bg-gradient-to-r from-[#061426]/25 via-transparent to-transparent"/>
    <div className="relative mx-auto grid max-w-[1500px] gap-4 px-5 pb-10 pt-6 lg:grid-cols-[.98fr_1.02fr] lg:px-9">
     <div className="max-w-[650px] pt-2">
      <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-300/40 bg-[#082c54]/70 px-3 py-1.5 text-[9px] font-bold tracking-wide text-blue-100"><Sparkles size={12}/> IA ESPECIALIZADA EM NBR 5410</div>
