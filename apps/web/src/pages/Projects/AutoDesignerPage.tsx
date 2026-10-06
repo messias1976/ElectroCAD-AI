@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiFetch } from "../../services/api";
+import ProductVisual from '../../components/ProductVisual';
 import {
   Plus, Trash2, WandSparkles, Printer, Save, Zap, Download,
   Home, FileText, RotateCcw, CheckCircle2, AlertTriangle
@@ -411,6 +412,7 @@ export default function AutoDesignerPage() {
 
   return (
     <div className="min-h-full space-y-6 pb-12 text-left print:bg-white">
+      <ProductVisual kind="dimensioning" />
       <div className="flex flex-wrap items-center justify-between gap-4 print:hidden">
         <div><h2 className="text-3xl font-bold text-slate-900">Projetista Automático</h2><p className="mt-1 text-sm text-slate-500">Da casa ao quadro de cargas, diagrama e lista preliminar de materiais.</p></div>
         <div className="flex flex-wrap items-center gap-2">
