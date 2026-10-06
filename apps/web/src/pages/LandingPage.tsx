@@ -63,12 +63,12 @@ export default function LandingPage() {
               </div>
               <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500"><span>✓ Acesso pelo computador e celular</span><span>✓ Projetos centralizados</span><span>✓ Recursos de IA</span></div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm sm:p-7">
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Seu espaço de trabalho</p><h2 className="mt-1 text-xl font-bold text-slate-900">ElectroCAD-AI</h2></div><span className="rounded-lg bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">2D</span></div>
-                <div className="mt-5 grid grid-cols-2 gap-3">{[["Projetos", "Organizados"], ["Clientes", "Centralizados"], ["Planta", "2D"], ["Professor", "IA"]].map(([title, value]) => <div key={title} className="rounded-xl border border-slate-200 p-4"><div className="text-sm font-semibold text-slate-900">{title}</div><div className="mt-1 text-sm text-slate-500">{value}</div></div>)}</div>
-                <div className="mt-3 rounded-xl bg-blue-600 p-4 text-white"><div className="text-sm font-semibold">Mais organização. Menos retrabalho.</div><div className="mt-1 text-sm text-blue-100">Tenha as principais ferramentas do projeto reunidas em uma única plataforma.</div></div>
-              </div>
+            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-xl">
+              <img
+                src="/assets/electrocad-landing-hero.svg"
+                alt="ElectroCAD-AI: projetos elétricos com IA, NBR 5410 e sistema 127/220 V"
+                className="h-full min-h-[360px] w-full object-cover"
+              />
             </div>
           </div>
         </section>
