@@ -36,8 +36,8 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-white text-slate-900 overflow-x-hidden">
+      <header className="absolute inset-x-0 top-0 z-30 border-b border-white/10 bg-slate-950/30 text-white backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
           <Link to="/" className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white">⚡</span>
@@ -55,11 +55,11 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-7xl gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[1.1fr_.9fr] lg:items-center lg:py-24">
             <div>
               <div className="mb-5 inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-700">Plataforma para projetos elétricos</div>
-              <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">Organize seus projetos elétricos em um só lugar.</h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">O ElectroCAD-AI reúne projetos, clientes, planta 2D, dimensionamento e recursos de inteligência artificial em uma plataforma simples para profissionais e empresas.</p>
+              <h1 className="max-w-3xl text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">Dimensione instalações elétricas com <span className="text-blue-400">Inteligência Artificial</span></h1>
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">O ElectroCAD-AI reúne projetos, clientes, planta 2D, dimensionamento e recursos de inteligência artificial em uma plataforma simples para profissionais e empresas.</p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link to="/register" className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-700">Começar agora</Link>
-                <a href="#planos" className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-6 py-3 text-base font-semibold text-slate-700 hover:bg-slate-50">Ver planos</a>
+                <a href="#planos" className="inline-flex items-center justify-center rounded-lg border border-white/50 bg-transparent px-6 py-3 text-base font-semibold text-white hover:bg-white/10">Ver demonstração</a>
               </div>
               <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500"><span>✓ Acesso pelo computador e celular</span><span>✓ Projetos centralizados</span><span>✓ Recursos de IA</span></div>
             </div>
