@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { apiFetch } from "../../services/api";
+import ProductVisual from '../../components/ProductVisual';
 
 type ClientItem = {
   id: string;
@@ -56,6 +57,7 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6">
+      <ProductVisual kind="clients" />
       <div>
         <h2 className="text-3xl font-bold text-slate-900">Clientes</h2>
         <p className="mt-2 text-sm text-slate-500">
