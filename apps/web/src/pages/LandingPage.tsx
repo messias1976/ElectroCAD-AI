@@ -19,8 +19,7 @@ const heroFeatures=[
 ];
 
 export default function LandingPage(){
- const [heroBg,setHeroBg]=useState("/assets/electrocad-landing-bg.webp");
- const fallbackHeroBg="https://raw.githubusercontent.com/messias1976/ElectroCAD-AI/main/apps/web/public/assets/electrocad-landing-bg.webp?v=2";
+ const heroBg="/assets/electrocad-landing-bg.jpg";
  const [plans,setPlans]=useState<Plan[]>(fallbackPlans);
  useEffect(()=>{let active=true;apiFetch("/plans",{cache:"no-store"}).then(d=>{if(active&&Array.isArray(d)&&d.length)setPlans(d)}).catch(()=>undefined);return()=>{active=false}},[]);
 
