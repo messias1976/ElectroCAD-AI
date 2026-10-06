@@ -40,7 +40,7 @@ export default function LandingPage(){
   <main>
   {/* HERO — composição visual equivalente à referência */}
   <section id="inicio" className="relative min-h-[575px] overflow-hidden bg-[#061a33] pt-24 text-white sm:min-h-[610px]">
-   <img src="/assets/electrocad-landing-hero.svg" alt="" className="absolute inset-0 h-full w-full object-cover"/>
+   <img src="/assets/electrocad-landing-bg.webp" alt="" className="absolute inset-0 h-full w-full object-cover"/>
    <div className="absolute inset-0 bg-gradient-to-r from-[#061426]/95 via-[#061a33]/65 to-[#061a33]/10"/>
    <div className="relative mx-auto grid max-w-[1500px] gap-4 px-5 pb-10 pt-6 lg:grid-cols-[.98fr_1.02fr] lg:px-9">
     <div className="max-w-[650px] pt-2">
@@ -93,7 +93,7 @@ export default function LandingPage(){
 
   {/* PROVA SOCIAL / RODAPÉ VISUAL */}
   <section className="relative overflow-hidden bg-[#071c36] text-white">
-   <div className="absolute inset-0 opacity-30"><img src="/assets/electrocad-landing-hero.svg" alt="" className="h-full w-full object-cover"/></div>
+   <div className="absolute inset-0 opacity-30"><img src="/assets/electrocad-landing-bg.webp" alt="" className="h-full w-full object-cover"/></div>
    <div className="relative mx-auto grid max-w-[1300px] grid-cols-2 gap-3 px-5 py-6 sm:grid-cols-4">
     {[[Users,"+500","Projetos criados"],[Users,"+300","Profissionais"],[ShieldCheck,"99%","Conforme NBR 5410"],[Star,"4.9","Avaliação dos usuários"]].map(([Icon,n,t]:any)=><div key={t} className="flex items-center justify-center gap-2"><span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5"><Icon size={18}/></span><div><b className="block text-lg">{n}</b><span className="text-[9px] text-slate-300">{t}</span></div></div>)}
    </div>
