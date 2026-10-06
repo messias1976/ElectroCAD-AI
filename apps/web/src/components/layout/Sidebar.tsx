@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { House, CreditCard, Users, TrendingUp, CircuitBoard, PenTool, Bot, Settings, FolderKanban, Calculator, UserCircle, X, FileText, BookOpen, LayoutTemplate } from 'lucide-react';
+import { House, CreditCard, Users, TrendingUp, CircuitBoard, PenTool, Bot, Settings, FolderKanban, X, FileText, BookOpen, LayoutTemplate } from 'lucide-react';
 import { getStoredUser } from '../../services/auth';
 
 const common=[
