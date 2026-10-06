@@ -6,7 +6,7 @@ const common=[
  {label:'Dashboard',icon:House,path:'/dashboard'},
  {label:'Projetos',icon:FolderKanban,path:'/projects'},
  {label:'Clientes',icon:Users,path:'/clients'},
- {label:'Modelos',icon:LayoutTemplate,path:'/projects'},
+ {label:'Modelos de Projetos',icon:LayoutTemplate,path:'/modelos'},
  {label:'Planta elétrica',icon:PenTool,path:'/planta'},
  {label:'Projetista',icon:CircuitBoard,path:'/projetista'},
  {label:'Relatórios',icon:FileText,path:'/dimensionamento'},
