@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 760" role="img" aria-labelledby="title desc">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#061426"/><stop offset=".55" stop-color="#0b2b55"/><stop offset="1" stop-color="#0b63d8"/></linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff" stop-opacity=".22"/><stop offset="1" stop-color="#ffffff" stop-opacity=".05"/></linearGradient>
+  <filter id="shadow"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#00142d" flood-opacity=".35"/></filter>
+</defs>
+<title id="title">ElectroCAD-AI — projetos elétricos com inteligência artificial</title>
+<desc id="desc">Casa moderna, planta elétrica, quadro de disjuntores e elementos de engenharia em uma composição azul profissional.</desc>
+<rect width="1400" height="760" rx="32" fill="url(#bg)"/>
+<g opacity=".12" stroke="#8bd1ff" fill="none">
+  <path d="M40 610H1360M40 660H1360M90 80V700M180 60V700M1180 50V700M1280 60V700"/>
+  <path d="M70 140H510V330H70zM870 80h430v230H870z"/>
+</g>
+<g fill="#fff">
+  <text x="70" y="110" font-family="Arial,sans-serif" font-size="34" font-weight="700">⚡ ElectroCAD<tspan fill="#47a6ff">-AI</tspan></text>
+  <text x="70" y="160" font-family="Arial,sans-serif" font-size="17" opacity=".7">DIMENSIONAMENTO ELÉTRICO INTELIGENTE</text>
+  <text x="70" y="285" font-family="Arial,sans-serif" font-size="66" font-weight="800">Projetos elétricos</text>
+  <text x="70" y="355" font-family="Arial,sans-serif" font-size="66" font-weight="800" fill="#45a5ff">com IA</text>
+  <text x="70" y="402" font-family="Arial,sans-serif" font-size="22" opacity=".82">Organize, dimensione e documente seus projetos</text>
+  <text x="70" y="433" font-family="Arial,sans-serif" font-size="22" opacity=".82">com mais rapidez, segurança e precisão.</text>
+</g>
+<g transform="translate(760 125)" filter="url(#shadow)">
+  <polygon points="0,220 310,40 620,220" fill="#0e2440" stroke="#8bd1ff" stroke-width="4"/>
+  <rect x="65" y="215" width="490" height="280" rx="12" fill="#eaf4ff"/>
+  <rect x="120" y="285" width="150" height="210" fill="#17395c"/>
+  <rect x="315" y="285" width="175" height="105" fill="#8bd1ff" opacity=".85"/>
+  <rect x="315" y="415" width="175" height="80" fill="#d8ecff"/>
+  <path d="M60 505H560" stroke="#8bd1ff" stroke-width="8"/>
+  <g transform="translate(365 -5)" fill="none" stroke="#62c2ff" stroke-width="3">
+    <path d="M0 0v80h80v80h80v80"/>
+    <circle cx="0" cy="0" r="9" fill="#ffd35a"/><circle cx="80" cy="80" r="9" fill="#61e5a7"/><circle cx="160" cy="160" r="9" fill="#ff7c7c"/>
+  </g>
+</g>
+<g transform="translate(760 585)">
+  <rect width="160" height="70" rx="16" fill="url(#glass)" stroke="#8bd1ff" stroke-opacity=".45"/>
+  <text x="22" y="29" fill="#8bd1ff" font-family="Arial,sans-serif" font-size="13">NORMA</text><text x="22" y="51" fill="#fff" font-family="Arial,sans-serif" font-size="20" font-weight="700">NBR 5410</text>
+  <rect x="178" width="160" height="70" rx="16" fill="url(#glass)" stroke="#8bd1ff" stroke-opacity=".45"/>
+  <text x="200" y="29" fill="#8bd1ff" font-family="Arial,sans-serif" font-size="13">SISTEMA</text><text x="200" y="51" fill="#fff" font-family="Arial,sans-serif" font-size="20" font-weight="700">127/220 V</text>
+  <rect x="356" width="160" height="70" rx="16" fill="url(#glass)" stroke="#8bd1ff" stroke-opacity=".45"/>
+  <text x="378" y="29" fill="#8bd1ff" font-family="Arial,sans-serif" font-size="13">FLUXO</text><text x="378" y="51" fill="#fff" font-family="Arial,sans-serif" font-size="20" font-weight="700">Mais rápido</text>
+</g>
+</svg>
