@@ -3,6 +3,7 @@ import { ArrowLeft, Calculator, FileText, Printer, Save, ShieldCheck, Wrench } f
 import { Link, useSearchParams } from 'react-router-dom';
 import { apiFetch } from '../../services/api';
 import { calculateDimensioning, estimateServiceBudget, type CircuitInput, type DimensioningInput } from '../../services/electricalCalculator';
+import ProductVisual from '../../components/ProductVisual';
 
 type Project = { id: string; name: string; description?: string; client?: { name: string }; projectData?: string | null; plantData?: string | null; designData?: string | null };
 function parse(value?: string | null): any { try { return value ? JSON.parse(value) : {}; } catch { return {}; } }
@@ -90,6 +91,7 @@ export default function DimensioningPage() {
   }
 
   return <div className="dimensioning-page mx-auto max-w-6xl space-y-5 pb-12">
+    <ProductVisual kind="dimensioning" />
     <style>{`@media print { @page { size: A4; margin: 12mm; } body { background: #fff !important; } .dimensioning-page { max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; display: block !important; } .no-print-dimensioning { display: none !important; } .dimensioning-print-header { display: block !important; } .dimensioning-section { break-inside: auto; page-break-inside: auto; } .dimensioning-card { break-inside: avoid; page-break-inside: avoid; } table { width: 100% !important; border-collapse: collapse !important; } thead { display: table-header-group; } tr { break-inside: avoid; page-break-inside: avoid; } .print-small { font-size: 10px !important; } } @media screen { .dimensioning-print-header { display: none; } }`}</style>
     <div className="dimensioning-print-header mb-6 border-b pb-4"><h1 className="text-2xl font-bold">ElectroCAD-AI — Dimensionamento e Orçamento</h1><p className="mt-1 text-sm">Projeto: <b>{project?.name || '—'}</b>{project?.client?.name ? ` · Cliente: ${project.client.name}` : ''}</p><p className="text-xs text-slate-500">Documento de pré-dimensionamento · Materiais sem preços · Orçamento somente de mão de obra</p></div>
 
