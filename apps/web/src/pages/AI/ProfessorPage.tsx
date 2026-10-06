@@ -3,6 +3,7 @@ import { Bot, CheckCircle2, FileCog, Loader2, Save, Send, Settings, Sparkles, Us
 import { Link, useSearchParams } from 'react-router-dom';
 import { askProfessor, generateProjectWithAi, getAiStatus } from '../../services/ai';
 import { apiFetch } from '../../services/api';
+import ProductVisual from '../../components/ProductVisual';
 
 type Message = { role: 'user' | 'assistant'; text: string };
 
@@ -39,6 +40,7 @@ export default function ProfessorPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 pb-12">
+      <ProductVisual kind="ai" />
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-3xl font-bold text-slate-900"><Bot className="mr-2 inline text-blue-600" />Professor ElectroCAD</h2><p className="mt-1 text-sm text-slate-500">Assistente técnico conectado ao projeto atual.</p>{projectLoading ? <p className="mt-2 text-xs text-slate-500">Carregando projeto do servidor...</p> : projectContext ? <p className="mt-2 text-xs font-semibold text-blue-700">Projeto: {projectContext.name} · Cliente: {projectContext.client?.name || 'Não informado'}</p> : <p className="mt-2 text-xs text-amber-700">Nenhum projeto selecionado. Abra o Professor a partir de um projeto para análise completa.</p>}</div>{isAdmin && <Link to="/configuracoes-ia" className="rounded-xl border bg-white px-4 py-2 font-semibold hover:bg-slate-50"><Settings className="mr-2 inline" size={17} />Configurar IA</Link>}</div>
       <div className={`rounded-xl border p-4 text-sm ${checkingConfig ? 'border-slate-200 bg-slate-50 text-slate-700' : configured ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>{checkingConfig ? <>⏳ Verificando disponibilidade do Professor IA...</> : configured ? <><CheckCircle2 className="mr-2 inline" size={17} />IA disponível. A chave fica protegida no backend e não é enviada ao assinante.</> : <>⚠️ O Professor IA está aguardando a configuração da OpenAI pelo administrador.</>}</div>
       <section className="flex min-h-[620px] flex-col overflow-hidden rounded-2xl border bg-white shadow-sm">
