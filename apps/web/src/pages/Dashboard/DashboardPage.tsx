@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, Clock3, CreditCard, AlertTriangle, Search } from 'lucide-react';
+import { Users, Clock3, CreditCard, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { fetchProfile, getStoredUser } from '../../services/auth';
 import { apiFetch } from '../../services/api';
