@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 520" role="img" aria-labelledby="title desc">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071a31"/><stop offset=".7" stop-color="#0b4c96"/><stop offset="1" stop-color="#1682f4"/></linearGradient>
+ <filter id="shadow"><feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#00142d" flood-opacity=".3"/></filter>
+</defs>
+<title id="title">Dashboard ElectroCAD-AI</title><desc id="desc">Painel SaaS com métricas, projetos recentes, atalhos e visual técnico.</desc>
+<rect width="1400" height="520" rx="28" fill="url(#bg)"/>
+<g fill="#fff"><text x="55" y="65" font-family="Arial,sans-serif" font-size="30" font-weight="800">Dashboard ElectroCAD-AI</text><text x="55" y="98" font-family="Arial,sans-serif" font-size="16" opacity=".72">Visão rápida da sua operação de projetos elétricos</text></g>
+<g transform="translate(55 135)" filter="url(#shadow)">
+ <rect width="290" height="125" rx="20" fill="#fff"/><text x="25" y="36" fill="#64748b" font-family="Arial" font-size="15">Projetos</text><text x="25" y="80" fill="#0f172a" font-family="Arial" font-size="42" font-weight="800">12</text><text x="205" y="78" fill="#16a34a" font-family="Arial" font-size="16" font-weight="700">+20%</text>
+ <rect x="310" width="290" height="125" rx="20" fill="#fff"/><text x="335" y="36" fill="#64748b" font-family="Arial" font-size="15">Clientes</text><text x="335" y="80" fill="#0f172a" font-family="Arial" font-size="42" font-weight="800">08</text><text x="515" y="78" fill="#16a34a" font-family="Arial" font-size="16" font-weight="700">+14%</text>
+ <rect x="620" width="290" height="125" rx="20" fill="#fff"/><text x="645" y="36" fill="#64748b" font-family="Arial" font-size="15">Relatórios</text><text x="645" y="80" fill="#0f172a" font-family="Arial" font-size="42" font-weight="800">09</text><text x="825" y="78" fill="#16a34a" font-family="Arial" font-size="16" font-weight="700">+50%</text>
+ <rect x="930" width="360" height="125" rx="20" fill="#fff"/><text x="955" y="36" fill="#64748b" font-family="Arial" font-size="15">Acesso rápido</text><rect x="955" y="55" width="145" height="42" rx="12" fill="#0b74ed"/><text x="978" y="82" fill="#fff" font-family="Arial" font-size="14" font-weight="700">Novo projeto</text><rect x="1115" y="55" width="145" height="42" rx="12" fill="#eef6ff"/><text x="1134" y="82" fill="#0b74ed" font-family="Arial" font-size="14" font-weight="700">Ver projetos</text>
+</g>
+<g transform="translate(55 290)" filter="url(#shadow)">
+ <rect width="760" height="175" rx="22" fill="#fff"/><text x="25" y="38" fill="#0f172a" font-family="Arial" font-size="21" font-weight="800">Projetos recentes</text><text x="25" y="70" fill="#64748b" font-family="Arial" font-size="14">Residência 2 Quartos</text><text x="280" y="70" fill="#64748b" font-family="Arial" font-size="14">Casa Térrea</text><text x="500" y="70" fill="#64748b" font-family="Arial" font-size="14">Comércio 120 m²</text>
+ <g fill="#e8f2ff"><rect x="25" y="88" width="210" height="48" rx="10"/><rect x="255" y="88" width="210" height="48" rx="10"/><rect x="485" y="88" width="210" height="48" rx="10"/></g>
+ <g stroke="#1682f4" stroke-width="3" fill="none"><path d="M45 120h50v-22h55v40h60"/><path d="M275 120h55v-25h50v38h60"/><path d="M505 120h45v-28h55v42h65"/></g>
+</g>
+<g transform="translate(845 290)" filter="url(#shadow)">
+ <rect width="445" height="175" rx="22" fill="#fff"/><text x="25" y="38" fill="#0f172a" font-family="Arial" font-size="21" font-weight="800">Conformidade &amp; produtividade</text><text x="25" y="70" fill="#475569" font-family="Arial" font-size="14">NBR 5410 • Planta 2D • Dimensionamento • IA</text>
+ <g transform="translate(25 95)" fill="#0b74ed"><circle cx="12" cy="12" r="12"/><circle cx="52" cy="12" r="12"/><circle cx="92" cy="12" r="12"/></g>
+ <text x="25" y="145" fill="#64748b" font-family="Arial" font-size="13">Centralize dados, cálculos e documentação.</text>
+</g>
+</svg>
