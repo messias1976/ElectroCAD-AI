@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../../services/api';
+import ProductVisual from '../../components/ProductVisual';
 import {
   Check,
   ChevronLeft,
@@ -145,6 +146,7 @@ export default function ProjectsPage() {
         <h2 className="text-3xl font-bold text-slate-900">Novo projeto elétrico</h2>
         <p className="mt-2 text-sm text-slate-500">Cadastre os dados uma vez. Planta 2D, Projetista e Professor IA usarão o mesmo projeto.</p>
       </div>
+      <ProductVisual kind="projects" />
 
       {message && <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-700">{message}</div>}
 
