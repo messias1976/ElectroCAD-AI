@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../services/api";
+import ProductVisual from '../../components/ProductVisual';
 
 type Plan = {
   id: string;
@@ -50,6 +51,7 @@ export default function SubscriptionsPage() {
 
   return (
     <div className="space-y-6">
+      <ProductVisual kind="subscriptions" />
       <div>
         <h2 className="text-3xl font-bold text-slate-900">Assinaturas</h2>
         <p className="mt-2 text-sm text-slate-500">Configure os planos do seu SaaS, incluindo valores, período de teste gratuito e recursos.</p>
