@@ -59,6 +59,24 @@ export default function ProjectsPage() {
 
   useEffect(() => { void load(); }, []);
 
+  useEffect(() => {
+    const raw = sessionStorage.getItem('electrocad_project_template');
+    if (!raw) return;
+    try {
+      const template = JSON.parse(raw) as Record<string, unknown>;
+      setData(current => ({
+        ...current,
+        identification: { ...current.identification, propertyType: String(template.propertyType ?? current.identification.propertyType), purpose: String(template.purpose ?? current.identification.purpose) },
+        supply: { ...current.supply, voltage: String(template.voltage ?? current.supply.voltage), phases: String(template.phases ?? current.supply.phases) },
+        rooms: Array.isArray(template.rooms) ? template.rooms.map((room: any, index: number) => ({ id: Date.now() + index, name: String(room.name ?? `Ambiente ${index + 1}`), area: Number(room.area ?? 0), length: Number(room.length ?? 0), width: Number(room.width ?? 0) })) : current.rooms,
+      }));
+      setMessage('Modelo carregado. Agora selecione o cliente e personalize os dados antes de salvar.');
+      sessionStorage.removeItem('electrocad_project_template');
+    } catch {
+      sessionStorage.removeItem('electrocad_project_template');
+    }
+  }, []);
+
   async function load() {
     try {
       const [cs, ps] = await Promise.all([apiFetch('/clients'), apiFetch('/projects')]);
