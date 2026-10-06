@@ -19,7 +19,8 @@ const heroFeatures=[
 ];
 
 export default function LandingPage(){
- const heroBg="/assets/electrocad-landing-bg.jpg";
+ const [heroBg,setHeroBg]=useState("/assets/electrocad-landing-bg.webp");
+ const fallbackHeroBg="https://raw.githubusercontent.com/messias1976/ElectroCAD-AI/main/apps/web/public/assets/electrocad-landing-bg.webp";
  const [plans,setPlans]=useState<Plan[]>(fallbackPlans);
  useEffect(()=>{let active=true;apiFetch("/plans",{cache:"no-store"}).then(d=>{if(active&&Array.isArray(d)&&d.length)setPlans(d)}).catch(()=>undefined);return()=>{active=false}},[]);
 
@@ -41,7 +42,7 @@ export default function LandingPage(){
   <main>
   {/* HERO — composição visual equivalente à referência */}
   <section id="inicio" className="relative min-h-[575px] overflow-hidden bg-[#061a33] pt-24 text-white sm:min-h-[610px]">
-   <img src={heroBg} alt="" className="absolute inset-0 h-full w-full object-cover" loading="eager" fetchPriority="high"/>
+   <img src={heroBg} onError={()=>setHeroBg(fallbackHeroBg)} alt="" className="absolute inset-0 h-full w-full object-cover" loading="eager" fetchPriority="high"/>
    <div className="absolute inset-0 bg-gradient-to-r from-[#061426]/25 via-transparent to-transparent"/>
    <div className="relative mx-auto grid max-w-[1500px] gap-4 px-5 pb-10 pt-6 lg:grid-cols-[.98fr_1.02fr] lg:px-9">
     <div className="max-w-[650px] pt-2">
