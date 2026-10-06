@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowRight, Bot, Building2, CheckCircle2, FileText, Factory, Home, PlayCircle, ShieldCheck, Sparkles, Zap, Users, Calculator, Star, SlidersHorizontal, FileDown } from "lucide-react";
+import { ArrowRight, Bot, Building2, CheckCircle2, FileText, Factory, Home, PlayCircle, ShieldCheck, Sparkles, Users, Calculator, Star, SlidersHorizontal, FileDown } from "lucide-react";
 import { apiFetch } from "../services/api";
 
 type Plan={id:string;name:string;price:string;trialDays:number;description:string;features:string[]};
