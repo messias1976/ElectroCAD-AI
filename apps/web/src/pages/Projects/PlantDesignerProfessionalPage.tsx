@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } 
 import { ArrowLeft, BrainCircuit, FileText, Lightbulb, MousePointer2, Printer, Save, Square as WindowIcon, DoorOpen, Zap, Maximize2 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { apiFetch } from '../../services/api';
+import ProductVisual from '../../components/ProductVisual';
 
 type Kind = 'Luz' | 'TUG' | 'TUE';
 type Tool = 'select' | 'room' | 'door' | 'window' | Kind;
@@ -149,6 +150,7 @@ export default function PlantDesignerProfessionalPage() {
   function print() { window.print(); }
   return (
     <div className="plant-professional min-h-full space-y-4 pb-8 text-left">
+      <ProductVisual kind="plant" />
       <div className="rounded-xl border bg-slate-50 px-4 py-3 text-sm text-slate-600">{message}</div>
       <style>{`@media print{
        *{box-shadow:none!important}
