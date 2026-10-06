@@ -37,6 +37,7 @@ export default function LandingPage(){
    </div>
   </header>
 
+  <main>
   {/* HERO — composição visual equivalente à referência */}
   <section id="inicio" className="relative min-h-[575px] overflow-hidden bg-[#061a33] pt-24 text-white sm:min-h-[610px]">
    <img src="/assets/electrocad-landing-hero.svg" alt="" className="absolute inset-0 h-full w-full object-cover"/>
@@ -102,7 +103,7 @@ export default function LandingPage(){
   <section id="planos" className="bg-white py-14"><div className="mx-auto max-w-[1200px] px-5"><div className="text-center"><p className="text-xs font-bold uppercase tracking-widest text-blue-600">Planos</p><h2 className="mt-2 text-3xl font-black">Escolha o plano ideal</h2></div><div className="mt-8 grid gap-5 lg:grid-cols-3">{plans.map(p=><article key={p.id} className={`relative flex flex-col rounded-3xl border p-6 ${p.name.toLowerCase()==="pro"?"border-blue-500 bg-blue-50/30 shadow-xl":"border-slate-200 shadow-sm"}`}><h3 className="text-xl font-bold">{p.name}</h3><p className="mt-2 min-h-12 text-sm text-slate-500">{p.description}</p><div className="mt-4 text-3xl font-black">{p.price}<span className="text-xs font-normal text-slate-500">/mês</span></div><ul className="mt-5 flex-1 space-y-2 text-sm text-slate-600">{p.features.map(x=><li key={x}><CheckCircle2 className="mr-2 inline text-blue-600" size={15}/>{x}</li>)}</ul><Link to="/register" className="mt-5 rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-bold text-white">Começar com {p.name}</Link></article>)}</div></div></section>
 
   <section id="integracoes" className="bg-slate-50 py-10"><div className="mx-auto grid max-w-[1000px] grid-cols-2 gap-3 px-5 sm:grid-cols-4">{[[Calculator,"Projetista"],[Bot,"Professor IA"],[FileText,"Relatórios PDF"],[Users,"Gestão de clientes"]].map(([Icon,t]:any)=><div key={t} className="rounded-2xl border bg-white p-5 text-center shadow-sm"><Icon className="mx-auto text-blue-600"/><b className="mt-2 block text-sm">{t}</b></div>)}</div></section>
- </main>
+  </main>
  <footer id="contato" className="border-t bg-white"><div className="mx-auto flex max-w-[1500px] flex-col gap-2 px-5 py-7 text-xs text-slate-500 sm:flex-row sm:justify-between"><span>© {new Date().getFullYear()} ElectroCAD-AI</span><span>Projetos elétricos com mais organização, tecnologia e segurança.</span></div></footer>
  </div>;
 }
