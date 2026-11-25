@@ -1,15 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
-import axios from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { CreateChargeDto } from './create-charge.dto';
 
 export type AsaasBillingType = 'UNDEFINED' | 'BOLETO' | 'PIX' | 'CREDIT_CARD';
 export type AsaasCycle = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY';
 
+export interface AsaasCharge {
+  id?: string;
+  paymentId?: string;
+  billingId?: string;
+}
+
 @Injectable()
 export class AsaasService {
   private readonly logger = new Logger(AsaasService.name);
-  private readonly client;
+  private readonly client: AxiosInstance;
 
   constructor(private config: ConfigService) {
     const baseURL = this.config.get<string>('ASAAS_BASE_URL') || 'https://api.asaas.com/v3';
@@ -73,9 +79,9 @@ export class AsaasService {
     return res.data;
   }
 
-  async createCharge(dto: CreateChargeDto) {
+  async createCharge(dto: CreateChargeDto): Promise<AsaasCharge> {
     try {
-      const res = await this.client.post('/payments', {
+      const res = await this.client.post<AsaasCharge>('/payments', {
         customer: dto.customerId,
         billingType: dto.billingType,
         dueDate: dto.dueDate,

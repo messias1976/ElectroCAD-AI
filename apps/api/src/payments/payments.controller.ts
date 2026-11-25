@@ -1,6 +1,12 @@
-import { Body, Controller, Headers, Post, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  Post,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AsaasService } from './asaas.service';
+import { AsaasCharge, AsaasService } from './asaas.service';
 import { CreateChargeDto } from './create-charge.dto';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
@@ -13,12 +19,15 @@ export class PaymentsController {
   ) {}
 
   @Post('charge')
-  async createCharge(@Body() dto: CreateChargeDto) {
+  async createCharge(@Body() dto: CreateChargeDto): Promise<AsaasCharge> {
     return this.asaas.createCharge(dto);
   }
 
   @Post('webhook')
-  async webhook(@Body() body: any, @Headers() headers: Record<string, string | undefined>) {
+  async webhook(
+    @Body() body: any,
+    @Headers() headers: Record<string, string | undefined>,
+  ) {
     const secret = this.config.get<string>('ASAAS_WEBHOOK_SECRET');
     const incoming = headers['asaas-access-token'];
     if (secret && incoming !== secret) {
