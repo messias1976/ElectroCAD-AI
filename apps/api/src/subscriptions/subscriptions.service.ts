@@ -9,6 +9,33 @@ export class SubscriptionsService {
   async create(userId: string, plan: string, provider = 'ASAAS') { return this.prisma.subscription.create({ data: { userId, plan, provider, providerId: '', status: 'PENDING' } }); }
   async findById(id: string) { return this.prisma.subscription.findUnique({ where: { id } }); }
   async updateProviderIdById(id: string, providerId: string) { return this.prisma.subscription.update({ where: { id }, data: { providerId } }); }
+  async getMyPendingPayment(userId: string) {
+    const subscription = await this.prisma.subscription.findFirst({
+      where: {
+        userId,
+        provider: 'ASAAS',
+        status: { in: ['PENDING', 'SUSPENDED'] },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!subscription?.providerId) return null;
+
+    const payments = await this.asaas.listSubscriptionPayments(subscription.providerId);
+    const payment = payments
+      .filter(({ status }) => status === 'PENDING' || status === 'OVERDUE')
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
+    if (!payment) return null;
+
+    return {
+      id: payment.id,
+      status: payment.status,
+      dueDate: payment.dueDate,
+      value: payment.value,
+      billingType: payment.billingType,
+      invoiceUrl: payment.invoiceUrl ?? null,
+      bankSlipUrl: payment.bankSlipUrl ?? null,
+    };
+  }
   private getTrial(user: any) { const start = new Date(user.trialStartedAt ?? user.createdAt); const trialDays = Number(user.trialDays ?? 14); const end = new Date(start.getTime() + trialDays * 86400000); const now = new Date(); const remaining = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 86400000)); return { trialDays, trialStartedAt: start, trialEndsAt: end, daysRemaining: remaining, expired: now >= end }; }
   async getMyAccess(userId: string) { const user = await this.prisma.user.findUnique({ where: { id: userId }, include: { subscriptions: { orderBy: { createdAt: 'desc' }, take: 1 } } }); if (!user) return null; const subscription = user.subscriptions[0] ?? null; const active = subscription?.status === 'ACTIVE'; const trial = this.getTrial(user); return { userId: user.id, plan: subscription?.plan ?? 'Teste gratuito', subscriptionStatus: subscription?.status ?? 'TRIAL', provider: subscription?.provider ?? null, providerId: subscription?.providerId || null, hasActiveSubscription: active, ...trial, accessAllowed: active || !trial.expired, requiresSubscription: !active && trial.expired }; }
   async getAdminOverview() { const users = await this.prisma.user.findMany({ where: { role: { not: 'ADMIN' } }, orderBy: { createdAt: 'desc' }, include: { subscriptions: { orderBy: { createdAt: 'desc' }, take: 1 } } }); return users.map((user) => { const trial = this.getTrial(user); const subscription = user.subscriptions[0] ?? null; const active = subscription?.status === 'ACTIVE'; return { id: user.id, username: user.username, email: user.email, phone: user.phone, whatsapp: user.whatsapp, companyName: user.companyName, feedbackStatus: user.feedbackStatus, feedbackNotes: user.feedbackNotes, lastContactAt: user.lastContactAt, interestedInPlan: user.interestedInPlan, role: user.role, createdAt: user.createdAt, plan: subscription?.plan ?? 'Teste gratuito', subscriptionStatus: subscription?.status ?? 'TRIAL', provider: subscription?.provider ?? null, providerId: subscription?.providerId || null, asaasCustomerId: user.asaasCustomerId, hasActiveSubscription: active, ...trial, accessAllowed: active || !trial.expired, requiresSubscription: !active && trial.expired }; }); }

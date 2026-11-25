@@ -13,6 +13,9 @@ export class SubscriptionsController {
   @Get('me')
   async me(@Req() req: any) { return this.subs.getMyAccess(req.user.userId); }
 
+  @Get('me/payment')
+  async myPendingPayment(@Req() req: any) { return this.subs.getMyPendingPayment(req.user.userId); }
+
   @Post('checkout')
   async checkout(@Req() req: any, @Body() body: { plan: string; billingType?: AsaasBillingType; cpfCnpj?: string; name?: string; email?: string }) {
     return this.subs.createAsaasSubscription(req.user.userId, String(body?.plan ?? ''), body?.billingType || 'UNDEFINED', String(body?.cpfCnpj ?? ''), String(body?.name ?? ''), String(body?.email ?? ''));

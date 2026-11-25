@@ -19,6 +19,16 @@ export interface AsaasCharge {
   billingId?: string;
 }
 
+export interface AsaasPayment {
+  id: string;
+  status: string;
+  dueDate: string;
+  value: number;
+  billingType: AsaasBillingType;
+  invoiceUrl?: string | null;
+  bankSlipUrl?: string | null;
+}
+
 export interface AsaasCustomer {
   id: string;
 }
@@ -111,6 +121,13 @@ export class AsaasService {
       `/subscriptions/${encodeURIComponent(id)}`,
     );
     return res.data;
+  }
+
+  async listSubscriptionPayments(id: string): Promise<AsaasPayment[]> {
+    const res = await this.client.get<{ data: AsaasPayment[] }>(
+      `/subscriptions/${encodeURIComponent(id)}/payments`,
+    );
+    return res.data.data;
   }
 
   async updateSubscription(
