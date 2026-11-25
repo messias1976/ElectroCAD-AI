@@ -50,7 +50,8 @@ Próximos passos recomendados
 
 Configuração adicional para Asaas
 
-1. No arquivo `.env`, defina `ASAAS_API_KEY` e `ASAAS_WEBHOOK_SECRET`.
+1. No arquivo `.env`, defina `ASAAS_API_KEY`, `ASAAS_WEBHOOK_SECRET` e `ASAAS_BASE_URL`.
+   Para produção, use `https://api.asaas.com/v3`; para testes, use `https://api-sandbox.asaas.com/v3` junto com uma chave Sandbox.
 2. O endpoint de webhook está disponível em `POST /payments/webhook` na API e deve ser configurado no painel Asaas.
 3. O webhook atualiza o status da assinatura local após a confirmação do pagamento.
 4. A tela de assinatura consulta `GET /subscriptions/me/payment` para exibir uma cobrança pendente. Se o Asaas ainda não tiver gerado a primeira cobrança, atualize a consulta mais tarde.
